@@ -1,0 +1,6 @@
+seleniumn
+selenium-wire
+dataclasses
+yacs
+sqlalchemy
+uvicorn

@@ -1,0 +1,5 @@
+# 统一管理所有需要搜集的账号
+
+wechat:
+  SubscriptionAccounts:
+    - 蓝鲸课堂
