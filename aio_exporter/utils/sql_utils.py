@@ -1,5 +1,5 @@
 
-
+from sqlalchemy import select
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
 from .utils import get_work_dir
@@ -8,7 +8,7 @@ from datetime import datetime
 
 Base = declarative_base()
 
-
+# 记录文章的来源信息
 class Article(Base):
     __tablename__ = 'users'
     # 在数据库当中的编号
@@ -32,6 +32,13 @@ class Article(Base):
     # 例如 bilibili, wechat , toutiao...
     source = Column(String)  # 新增字段
 
+# 记录文章的存储路径
+class ArticleStorage(Base):
+    __tablename__ = 'article_storage'
+    id = Column(Integer, primary_key=True)
+    storage_path = Column(String)
+    created_at = Column(DateTime)
+
 
 def create_database():
     database = get_work_dir() / 'database'
@@ -40,6 +47,11 @@ def create_database():
     engine = create_engine(db_url)
     Base.metadata.create_all(engine)
     return engine
+
+# ---------------------------------------
+# Article
+#---------------------------------------
+
 
 # Query the number of articles by a specified author
 def count_articles_by_author(session, author , source = None):
@@ -92,3 +104,25 @@ def insert_if_not_exists(session, title, author, url, issue_date=None , source =
         insert_article(session, title, author, url, issue_date , source = source)
     else:
         logger.info('{existing_article.title} exists in database!')
+
+# ---------------------------------------
+# Article Storage
+#---------------------------------------
+
+def insert_article_path(session , article_id, storage_path):
+    """将一篇文章的路径插入到 ArticleStorage 中"""
+    # 创建 ArticleStorage 实例
+    article_storage = ArticleStorage(id=article_id, storage_path=storage_path)
+
+    # 添加到会话并提交
+    session.add(article_storage)
+    session.commit()
+
+
+def find_articles_without_storage(session):
+    """查询哪些文章没有在 ArticleStorage 中出现"""
+    # 查询没有对应 storage 的 articles
+    subquery = select(ArticleStorage.id)
+    query = select(Article).filter(~Article.id.in_(subquery))
+    articles_without_storage = session.execute(query).scalars().all()
+    return articles_without_storage
