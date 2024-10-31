@@ -20,8 +20,9 @@ class SearchUrls:
 
 class WechatScrawler(BaseScrawler):
     def __init__(self):
-        super().__init__("wechat")
+        super().__init__("wechat",True)
         cookies = load_cookies("wechat")
+        logger.info('create driver')
         login = WechatLogin(**cookies)
         self.driver.get("https://mp.weixin.qq.com")
         for cookie in login.cookies:
@@ -56,6 +57,15 @@ class WechatScrawler(BaseScrawler):
                 return id["fakeid"]
         return None
 
+
+    def count_new_article(self,account, fake_id):
+        publish_page = self.get_article_list(fake_id, start=0, count=1)
+        publish_count = publish_page['total_count']
+        # 判断是否 up 发布了新的内容
+        # 检查历史数据，分析已经获取了多少内容的数据
+        count_article_by_author = self.count_by_author(account)
+        return publish_count - count_article_by_author
+
     def walk_through_article(self, account , fake_id, count = 50, max_count = 200):
         # 先进行一个小的获取,拿到 page count
         publish_page = self.get_article_list(fake_id , start=0, count=1)
@@ -71,6 +81,7 @@ class WechatScrawler(BaseScrawler):
         for i in range(0, len(new_article_list), count):
             intervals.append(new_article_list[i:i+count])
 
+        titles = []
         current_count = 0
         for interval in intervals:
             start = interval[-1]
@@ -92,10 +103,11 @@ class WechatScrawler(BaseScrawler):
                 create_time = datetime.datetime.fromtimestamp(meta['create_time'])
                 self.insert_article(account, title, url, create_time)
                 logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
+                titles.append({'author':account , 'title':title})
             rand_sleep = np.random.randint(3, 10)
             time.sleep(rand_sleep)
         logger.info(f'更新数据库,为{account}找到了{current_count}篇文章')
-
+        return titles
     def get_article_list(self ,  fake_id , start, count):
         params = {
             "sub": "list",
@@ -124,15 +136,25 @@ class WechatScrawler(BaseScrawler):
         return publish_page
 
     def walk(self):
+        new_articles = []
         each_count = self.max_count // len(self.config.SubscriptionAccounts)
         for account in self.config.SubscriptionAccounts:
             fake_id = self.search_bizno(account)
-            self.walk_through_article(account , fake_id,  max_count = each_count)
-            break
+            articles = self.walk_through_article(account , fake_id,  max_count = each_count)
+            new_articles.extend(articles)
+        return new_articles
+
+    def count(self):
+        # 遍历公众号，检查还有多少文章没有获取到
+        new_counts = {}
+        for account in self.config.SubscriptionAccounts:
+            fake_id = self.search_bizno(account)
+            new_article_count = self.count_new_article(account, fake_id)
+            new_counts[account] = new_article_count
+        return new_counts
 
 
 if __name__ == "__main__":
     # 服务端,启动服务，加载 cookie, 并利用requests获取结果
     scrawler = WechatScrawler()
-
-    scrawler.walk()
+    scrawler.count()

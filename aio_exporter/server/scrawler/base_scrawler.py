@@ -7,10 +7,10 @@ from sqlalchemy.orm import sessionmaker
 from mmengine import Config
 
 class BaseScrawler:
-    def __init__(self, source_name):
+    def __init__(self, source_name,headless=True):
         # source name : 数据源名称, 详见 sql_utils::Article::source
         self.source_name = source_name
-        self.driver = load_driver(headless=True) # 非debug的情况可以采用静默模式
+        self.driver = load_driver(headless=headless) # 非debug的情况可以采用静默模式
         config_file = get_work_dir() / 'aio_exporter' / 'server' / 'config.yaml'
         self.config = Config.fromfile(config_file)[self.source_name]
         # 在 workdir 下面创建一个 database,并初始化 database下的数据库
@@ -42,3 +42,6 @@ class BaseScrawler:
             create_time,
             source = self.source_name
         )
+
+    def close(self):
+        return self.driver.close()
