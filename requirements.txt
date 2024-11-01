@@ -4,3 +4,8 @@ dataclasses
 yacs
 sqlalchemy
 uvicorn
+markdownify
+readability
+html_text
+pylcs
+beautifulsoup4

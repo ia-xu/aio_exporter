@@ -16,7 +16,7 @@ class BaseScrawler:
         # 在 workdir 下面创建一个 database,并初始化 database下的数据库
         database = get_work_dir() / 'database'
         database.mkdir(exist_ok=True)
-        self.session = self.init_sql_session()
+        self.session = sql_utils.init_sql_session(self.source_name)
 
     def init_sql_session(self):
         # 创建一个 database

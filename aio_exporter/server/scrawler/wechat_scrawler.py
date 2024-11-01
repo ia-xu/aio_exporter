@@ -93,7 +93,7 @@ class WechatScrawler(BaseScrawler):
                 if current_count >= max_count:
                     logger.info(f'更新数据库,为{account}找到了{self.max_count}篇文章')
                     logger.info('一次不能太贪心,休息一下吧')
-                    return
+                    return []
                 if not row['publish_info']:
                     continue
                 row = json.loads(row['publish_info'])
@@ -157,4 +157,4 @@ class WechatScrawler(BaseScrawler):
 if __name__ == "__main__":
     # 服务端,启动服务，加载 cookie, 并利用requests获取结果
     scrawler = WechatScrawler()
-    scrawler.count()
+    scrawler.walk()
