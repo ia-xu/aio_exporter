@@ -6,7 +6,7 @@ from pathlib import Path
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from seleniumwire import webdriver
-
+import platform
 
 
 def get_work_dir():
@@ -23,7 +23,10 @@ def load_driver(headless = True):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-    chrome_driver = work_dir / 'driver' / 'chromedriver.exe'
+    if platform.system().lower() == 'linux':
+        chrome_driver = '/root/driver/chromedriver-linux64/chromedriver'
+    else:
+        chrome_driver = work_dir / 'driver' / 'chromedriver.exe'
     driver = webdriver.Chrome(service=Service(executable_path=chrome_driver), options=chrome_options)
     return driver
 
@@ -50,5 +53,4 @@ def load_cookies(cls):
     with open(work_dir / 'cookies' / cls / 'cookies.json', encoding='utf-8') as f:
         cookies = json.load(f)
     return cookies
-
 
