@@ -33,14 +33,15 @@ class BaseScrawler:
             source = self.source_name
         )
 
-    def insert_article(self, author, title, url, create_time):
+    def insert_article(self, author, title, url, create_time , metainfo = None):
         return sql_utils.insert_if_not_exists(
             self.session,
             title ,
             author,
             url ,
             create_time,
-            source = self.source_name
+            source = self.source_name,
+            metainfo = metainfo
         )
 
     def close(self):

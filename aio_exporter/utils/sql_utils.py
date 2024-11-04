@@ -1,4 +1,4 @@
-
+from typing import List
 from sqlalchemy import select
 from sqlalchemy import func
 from sqlalchemy.ext.declarative import declarative_base
@@ -116,7 +116,7 @@ def get_ids_by_author(session, author, source=None):
     return [row.id for row in query.all()]
 
 
-def get_articles_by_ids(session, article_ids):
+def get_articles_by_ids(session, article_ids : List = None):
     """
     Retrieve articles based on a list of article IDs and return the results as a pandas DataFrame.
 
@@ -124,7 +124,9 @@ def get_articles_by_ids(session, article_ids):
     :param article_ids: List of article IDs to retrieve
     :return: pandas DataFrame containing the retrieved articles
     """
-    query = session.query(Article).filter(Article.id.in_(article_ids))
+    query = session.query(Article)
+    if article_ids is not None:
+        query = query.filter(Article.id.in_(article_ids))
     articles = query.all()
 
     # Convert the list of Article objects to a list of dictionaries
@@ -151,7 +153,7 @@ def get_articles_by_ids(session, article_ids):
 
 
 # Check if an article already exists and insert if not
-def insert_if_not_exists(session, title, author, url, issue_date=None , source = None):
+def insert_if_not_exists(session, title, author, url, issue_date=None , source = None , metainfo = None):
     query = session.query(Article).filter(
         Article.author == author,
         Article.title == title
@@ -165,7 +167,7 @@ def insert_if_not_exists(session, title, author, url, issue_date=None , source =
 
     existing_article = query.first()
     if not existing_article:
-        insert_article(session, title, author, url, issue_date , source = source)
+        insert_article(session, title, author, url, issue_date , source = source, metainfo = metainfo)
         return True
     else:
         logger.info(f'{existing_article.title} exists in database!')

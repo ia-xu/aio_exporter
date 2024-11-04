@@ -36,8 +36,8 @@ class WechatScrawler(BaseScrawler):
         self.driver.get("https://mp.weixin.qq.com")
         self.token = login.token
         self.header = get_headers(self.driver)
-        self.max_count = 50  #一次最多获取400篇文章的 url
-        self.num_for_once = 15 # 最大只能设置成20!!
+        self.max_count = self.config.max_count  #一次最多获取400篇文章的 url
+        self.num_for_once = self.config.num_for_once # 最大只能设置成20!!
         assert self.num_for_once <= 20
 
 
@@ -91,18 +91,43 @@ class WechatScrawler(BaseScrawler):
 
 
     def count_new_article(self,account, fake_id):
-        publish_page = self.get_article_list(fake_id, start=0, count=1)
-        publish_count = publish_page['total_count']
+        publish_count = self.find_last(account , fake_id)
         # 判断是否 up 发布了新的内容
         # 检查历史数据，分析已经获取了多少内容的数据
         count_article_by_author = self.count_by_author(account)
         return publish_count - count_article_by_author
 
-    def walk_through_article(self, account , fake_id, max_count = 200):
-
+    def find_last(self, account , fake_id):
         # 先进行一个小的获取,拿到 page count
         publish_page = self.get_article_list(fake_id , start=0, count=1)
         publish_count = publish_page['total_count']
+
+        # 这个拿到的数量可能不是特别准，尝试进行一次获取
+        start = max(0,publish_count - 20)
+        total_num = -1
+        while start != 0 or total_num < 0:
+            # 尝试获取文章数量
+            articles = self.get_article_list(fake_id, start, 20)
+            time.sleep(random.random() * 2)
+
+            article_num = len(articles['publish_list'])
+            if not articles['publish_list']:
+                start = max(0 , start - 20)
+            else:
+                total_num = start + article_num
+                break
+
+        logger.info(f'确认! {account} 文章数量更新为 {total_num}')
+        return total_num
+
+
+
+    def walk_through_article(self, account , fake_id, max_count = 200):
+        # 获取当前文章数
+        publish_count = self.find_last(account , fake_id)
+
+        time.sleep(random.random() * 3)
+
         # 判断是否 up 发布了新的内容
         # 检查历史数据，分析已经获取了多少内容的数据
         count_article_by_author = self.count_by_author(account)
@@ -128,25 +153,30 @@ class WechatScrawler(BaseScrawler):
             count = len(interval)
             # get article list in this interval
             articles = self.get_article_list(fake_id , start, count)
-            for row in articles['publish_list']:
+            # 把这些文章倒过来,越老的文章越先被加入到库当中
+            for rid , row in enumerate(articles['publish_list'][::-1]):
+                rid = len(articles['publish_list']) - 1 - rid
                 current_count += 1
                 if current_count >= max_count:
                     logger.info(f'更新数据库,为{account}找到了{current_count}篇文章')
                     logger.info('一次不能太贪心,休息一下吧')
                     return titles
+
+                query_info = json.dumps({'start' : start , 'count' : count , 'rid' : rid, 'publish_count' :  publish_count } , ensure_ascii=False)
+
                 if not row['publish_info']:
                     failure += 1
                     # 为了避免数据库问题,插入一个假的内容
                     title = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=13))
                     url = 'https://none'
-                    self.insert_article(account , title , url , datetime.datetime.now())
+                    self.insert_article(account , title , url , datetime.datetime.now() , metainfo=query_info)
                     continue
                 row = json.loads(row['publish_info'])
                 meta = row['appmsgex'][0]
                 title = meta['title']
                 url = meta['link']
                 create_time = datetime.datetime.fromtimestamp(meta['create_time'])
-                status = self.insert_article(account, title, url, create_time)
+                status = self.insert_article(account, title, url, create_time , metainfo = query_info)
                 if status:
                     logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
                     titles.append({'author':account , 'title':title})
@@ -210,4 +240,5 @@ if __name__ == "__main__":
     # 服务端,启动服务，加载 cookie, 并利用requests获取结果
     scrawler = WechatScrawler()
     # scrawler.walk()
-    scrawler.login()
+    # scrawler.login_status()
+    scrawler.walk()
