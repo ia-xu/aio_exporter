@@ -9,7 +9,7 @@ from datetime import datetime
 from dataclasses import asdict
 import requests
 import json
-
+from urllib.parse import urljoin
 from PIL import Image
 from io import BytesIO
 # import cv2
@@ -51,11 +51,21 @@ if __name__ == '__main__':
     login = WechatLogin(cookies , token)
     login = asdict(login)
 
-    cookie_dir = work_dir  / 'cookies' / 'wechat'
-    cookie_dir.mkdir(exist_ok=True)
+    # cookie_dir = work_dir  / 'cookies' / 'wechat'
+    # cookie_dir.mkdir(exist_ok=True)
+    #
+    # with open(cookie_dir / 'cookies.json' , 'w' , encoding='utf-8') as f:
+    #     json.dump(login , f , ensure_ascii=False , indent=4)
 
-    with open(cookie_dir / 'cookies.json' , 'w' , encoding='utf-8') as f:
-        json.dump(login , f , ensure_ascii=False , indent=4)
+    # post 到远端
+    url = 'http://127.0.0.1:31006'
+    status = requests.post(
+        urljoin(url , 'api/wechat/login') ,
+        json = login
+    )
+    # 检查远端状态是否更新
+    print(status.content)
+
 
 
 

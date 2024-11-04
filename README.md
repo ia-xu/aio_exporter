@@ -17,3 +17,11 @@
 
 ## local
     - 负责各种工具的 cookie的重新生成 
+
+
+## linux chrome driver download 
+    - https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.91/linux64/chromedriver-linux64.zip
+    - https://googlechromelabs.github.io/chrome-for-testing/
+
+## pip source 
+    - https://pypi.tuna.tsinghua.edu.cn/simple

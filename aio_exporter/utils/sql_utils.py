@@ -109,6 +109,12 @@ def get_article_url(session, author, title, source=None):
     return article.url if article else None
 
 
+def get_ids_by_author(session, author, source=None):
+    query = session.query(Article.id).filter(Article.author == author)
+    if source:
+        query = query.filter(Article.source == source)
+    return [row.id for row in query.all()]
+
 
 def get_articles_by_ids(session, article_ids):
     """
@@ -150,6 +156,8 @@ def insert_if_not_exists(session, title, author, url, issue_date=None , source =
         Article.author == author,
         Article.title == title
     )
+    if issue_date is not None:
+        query = query.filter(Article.issue_date == issue_date)
 
     # 如果 source 不是 None，则添加 source 的判断
     if source is not None:
@@ -158,8 +166,23 @@ def insert_if_not_exists(session, title, author, url, issue_date=None , source =
     existing_article = query.first()
     if not existing_article:
         insert_article(session, title, author, url, issue_date , source = source)
+        return True
     else:
-        logger.info('{existing_article.title} exists in database!')
+        logger.info(f'{existing_article.title} exists in database!')
+        return False
+
+
+def group_articles_by_source_and_account(session, source_filter):
+    results = (
+        session.query(
+            Article.author,
+            func.count(Article.id).label('article_count')
+        )
+        .filter(Article.source == source_filter)
+        .group_by(Article.author)
+        .all()
+    )
+    return results
 
 # ---------------------------------------
 # Article Storage
@@ -308,3 +331,15 @@ def clear_article_storage(session):
     session.commit()
     print("ArticleStorage 表已清空")
 
+def group_articles_by_status(session, source):
+    results = (
+        session.query(
+            ArticleStorage.status,
+            func.count(ArticleStorage.id).label('count')
+        )
+        .join(Article, Article.id == ArticleStorage.id)  # 根据需要进行连接
+        .filter(Article.source == source)
+        .group_by(ArticleStorage.status)
+        .all()
+    )
+    return results

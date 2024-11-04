@@ -1,4 +1,4 @@
-seleniumn
+selenium
 selenium-wire
 dataclasses
 yacs
@@ -9,3 +9,10 @@ readability
 html_text
 pylcs
 beautifulsoup4
+blinker==1.7.0
+loguru
+pandas
+mmengine
+requests
+tqdm
+streamlit

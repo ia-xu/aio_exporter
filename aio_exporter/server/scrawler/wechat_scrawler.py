@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 from aio_exporter.utils import get_work_dir, load_driver, get_headers, load_cookies
 from aio_exporter.utils.struct import WechatLogin
@@ -5,6 +6,10 @@ from aio_exporter.server.scrawler.base_scrawler import BaseScrawler
 from dataclasses import dataclass
 import requests
 import json
+import random
+import string
+
+from aio_exporter.utils import sql_utils
 from io import BytesIO
 import numpy as np
 
@@ -15,12 +20,13 @@ import time
 
 @dataclass
 class SearchUrls:
+    scan_qrcode: str = 'https://mp.weixin.qq.com/cgi-bin/scanloginqrcode'
     search_bizno: str = "https://mp.weixin.qq.com/cgi-bin/searchbiz"
     search_article : str = "https://mp.weixin.qq.com/cgi-bin/appmsgpublish"
 
 class WechatScrawler(BaseScrawler):
     def __init__(self):
-        super().__init__("wechat",True)
+        super().__init__("wechat",False)
         cookies = load_cookies("wechat")
         logger.info('create driver')
         login = WechatLogin(**cookies)
@@ -30,7 +36,33 @@ class WechatScrawler(BaseScrawler):
         self.driver.get("https://mp.weixin.qq.com")
         self.token = login.token
         self.header = get_headers(self.driver)
-        self.max_count = 400  #一次最多获取400篇文章的 url
+        self.max_count = 50  #一次最多获取400篇文章的 url
+        self.num_for_once = 15 # 最大只能设置成20!!
+        assert self.num_for_once <= 20
+
+
+    def login_status(self):
+        # # 检查是否能够成功登录
+        # self.driver.get("https://mp.weixin.qq.com")
+        # params = {
+        #     "action": "ask",
+        #     "token" : self.token,
+        #     "lang": 'zh_CN',
+        #     "f": "json",
+        #     "ajax": 1,
+        # }
+        # out = requests.get(
+        #     SearchUrls.scan_qrcode, params=params, headers=get_headers(self.driver)
+        # )
+
+        # 先用一个简单的方法替代一下
+        try:
+            self.search_bizno('蓝鲸课堂')
+        except:
+            return False
+
+        return True
+
 
     def search_bizno(self, name):
         # 搜索特定内容的名称
@@ -66,7 +98,8 @@ class WechatScrawler(BaseScrawler):
         count_article_by_author = self.count_by_author(account)
         return publish_count - count_article_by_author
 
-    def walk_through_article(self, account , fake_id, count = 50, max_count = 200):
+    def walk_through_article(self, account , fake_id, max_count = 200):
+
         # 先进行一个小的获取,拿到 page count
         publish_page = self.get_article_list(fake_id , start=0, count=1)
         publish_count = publish_page['total_count']
@@ -74,15 +107,22 @@ class WechatScrawler(BaseScrawler):
         # 检查历史数据，分析已经获取了多少内容的数据
         count_article_by_author = self.count_by_author(account)
         article_indices = list(range(publish_count))[::-1]
+
+        # debug: 已经入库的部分
+        # debug_data = sql_utils.get_articles_by_ids(self.session, sql_utils.get_ids_by_author(self.session, account, 'wechat'))
+
         # 去除掉已经遍历的部分
         new_article_list = article_indices[count_article_by_author:]
         # 按照50个一个等间隔的划分
+        count = self.num_for_once
         intervals = []
         for i in range(0, len(new_article_list), count):
             intervals.append(new_article_list[i:i+count])
 
+
         titles = []
         current_count = 0
+        failure = 0
         for interval in intervals:
             start = interval[-1]
             count = len(interval)
@@ -91,19 +131,27 @@ class WechatScrawler(BaseScrawler):
             for row in articles['publish_list']:
                 current_count += 1
                 if current_count >= max_count:
-                    logger.info(f'更新数据库,为{account}找到了{self.max_count}篇文章')
+                    logger.info(f'更新数据库,为{account}找到了{current_count}篇文章')
                     logger.info('一次不能太贪心,休息一下吧')
-                    return []
+                    return titles
                 if not row['publish_info']:
+                    failure += 1
+                    # 为了避免数据库问题,插入一个假的内容
+                    title = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=13))
+                    url = 'https://none'
+                    self.insert_article(account , title , url , datetime.datetime.now())
                     continue
                 row = json.loads(row['publish_info'])
                 meta = row['appmsgex'][0]
                 title = meta['title']
                 url = meta['link']
                 create_time = datetime.datetime.fromtimestamp(meta['create_time'])
-                self.insert_article(account, title, url, create_time)
-                logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
-                titles.append({'author':account , 'title':title})
+                status = self.insert_article(account, title, url, create_time)
+                if status:
+                    logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
+                    titles.append({'author':account , 'title':title})
+                else:
+                    logger.info('why?')
             rand_sleep = np.random.randint(3, 10)
             time.sleep(rand_sleep)
         logger.info(f'更新数据库,为{account}找到了{current_count}篇文章')
@@ -142,6 +190,8 @@ class WechatScrawler(BaseScrawler):
             fake_id = self.search_bizno(account)
             articles = self.walk_through_article(account , fake_id,  max_count = each_count)
             new_articles.extend(articles)
+            if len(new_articles) >= self.max_count:
+                break
         return new_articles
 
     def count(self):
@@ -151,10 +201,13 @@ class WechatScrawler(BaseScrawler):
             fake_id = self.search_bizno(account)
             new_article_count = self.count_new_article(account, fake_id)
             new_counts[account] = new_article_count
+            sleep = random.randint(1,5)
+            time.sleep(sleep)
         return new_counts
 
 
 if __name__ == "__main__":
     # 服务端,启动服务，加载 cookie, 并利用requests获取结果
     scrawler = WechatScrawler()
-    scrawler.walk()
+    # scrawler.walk()
+    scrawler.login()

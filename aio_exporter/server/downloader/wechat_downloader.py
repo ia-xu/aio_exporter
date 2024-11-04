@@ -29,9 +29,18 @@ class WechatDownloader(BaseDownloader):
         ids = self.gather_no_download_ids()
         logger.info(f'found {len(ids)} wechat articles to insert')
         articles = self.gather_articles(ids)
+        locations = []
         for _ , article in tqdm(articles.iterrows()):
             # 分配存储路径,添加到库,将 状态变化为 '尚未开始'
-            self.insert_and_assign_path(article)
+            file_path = self.insert_and_assign_path(article)
+            locations .append(
+                {
+                    'account' : article.author,
+                    'title' : article.title ,
+                    'location' : str(file_path)
+                }
+            )
+        return locations
 
     def insert_and_assign_path(self,article):
         # 根据 article 的信息，为article 生成存储的路径
@@ -48,10 +57,11 @@ class WechatDownloader(BaseDownloader):
             file_path = account_dir / f'{article.id}_{idx}_{title}.md'
             idx += 1
         logger.info(f'为账号{article.author} 文章分配路径到 {file_path.name}')
-        return self.insert_assigned_path(
+        self.insert_assigned_path(
             article.id , file_path , '尚未开始' , 'file')
+        return file_path
 
-    async def post_process_html(self, url , result):
+    def post_process_html(self, url , result):
         if result.status_code != 200:
             return ''
         soup = BeautifulSoup(result.content , 'html.parser')
@@ -83,25 +93,31 @@ class WechatDownloader(BaseDownloader):
         article_with_file_path = self.gather_article_with_storage(ids_need_download)
         # 将文章卸载到指定目录
         download_count = 0
+        status = []
         for i in range(0, len(article_with_file_path), self.batch_size):
             batch = article_with_file_path[i:i + self.batch_size]
             download_count += len(batch)
             if download_count > self.max_download_size:
                 logger.info('超出单次下载限制!')
-                return
+                return status
             urls = batch['url'].tolist()  # 获取当前批次的 URL
             # 每次调用 asyncio 的方法，一次性获取10篇文章的 html
             results = html_utils.download_urls(urls ,self.post_process_html)  # 下载 HTML
             for (_ ,row) ,result in zip(batch.iterrows(),results):
+                if row.url == 'https://none':
+                    self.upsert_status(row.id , '无效数据')
+                    continue
                 if not result:
                     # 说明下载失败
                     self.upsert_status(row.id , '下载失败')
+                    status.append({'title':row.title ,'status':'下载失败'})
                 else:
                     # 说明下载成功
                     with open(row.storage_path, 'w', encoding='utf-8') as f:
                         f.write(result)
                     self.upsert_status(row.id , '下载成功')
-
+                    status.append({'title':row.title ,'status':'下载成功'})
+        return status
 
 if __name__ == '__main__':
     wechat_downloader = WechatDownloader()

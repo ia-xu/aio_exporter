@@ -34,7 +34,7 @@ class BaseScrawler:
         )
 
     def insert_article(self, author, title, url, create_time):
-        sql_utils.insert_if_not_exists(
+        return sql_utils.insert_if_not_exists(
             self.session,
             title ,
             author,

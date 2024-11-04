@@ -1,4 +1,5 @@
 import random
+import time
 
 import requests
 import asyncio
@@ -30,19 +31,25 @@ def clean_html(text):
     return text
 
 
-async def download_url(url):
+def download_url(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
     }
     # 简单地进行 url 请求
     rand = random.randint(1,3)
-    await asyncio.sleep(rand)
+    time.sleep(3)
     page_content = requests.get(url , headers = headers)
     return page_content
 
-
-
 def download_urls(urls , post_process_fn):
+    results = []
+    for url in urls:
+        page_content = download_url(url)
+        results.append(post_process_fn(url , page_content))
+    return results
+
+
+async def download_urls_async(urls , post_process_fn):
     async def main():
         tasks = [download_url(url) for url in urls]
         results = await asyncio.gather(*tasks)
@@ -51,4 +58,7 @@ def download_urls(urls , post_process_fn):
         post_process_results = await asyncio.gather(*post_process_tasks)
         return post_process_results
 
-    return asyncio.run(main())
+
+    results = await main()
+    return results
+
