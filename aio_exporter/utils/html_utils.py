@@ -44,8 +44,11 @@ def download_url(url):
 def download_urls(urls , post_process_fn):
     results = []
     for url in urls:
-        page_content = download_url(url)
-        results.append(post_process_fn(url , page_content))
+        try:
+            page_content = download_url(url)
+            results.append(post_process_fn(url , page_content))
+        except:
+            results.append(None)
     return results
 
 

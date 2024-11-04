@@ -1,5 +1,6 @@
 selenium
 selenium-wire
+pydantic
 dataclasses
 yacs
 sqlalchemy
