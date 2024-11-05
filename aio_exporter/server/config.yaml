@@ -15,4 +15,6 @@ scrawler:
 downloader:
   wechat:
     # 单次做多下载文章数量
-    max_download_size : 100
+    max_download_size : 50
+    # 单次最多额外创建 200 条任务
+    max_asssign_count: 200

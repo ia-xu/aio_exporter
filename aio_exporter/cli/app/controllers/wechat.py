@@ -64,13 +64,23 @@ class WechatController(Controller):
         scrawler.close()
         return counts
 
+    # ----------------------------
+    # download
+    # ----------------------------
+    @get('/task_num')
+    async def get_no_download_in_task_list(self) -> int:
+        downloader = WechatDownloader()
+        return downloader.get_no_download_in_task_list()
 
-    @get('/assign_download_path')
+
+
+    @post('/assign_download_path')
     async def assign_download_path(self):
         downloader = WechatDownloader()
         return downloader.assign_path_for_new_articles()
 
-    @get('/download')
-    async def download_articles(self):
+    @post('/download')
+    async def download_articles(self , new_article : bool):
         downloader = WechatDownloader()
-        return downloader.download()
+        result = await downloader.download(new_article)
+        return result

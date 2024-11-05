@@ -8,6 +8,7 @@ import html_text
 import markdownify
 import pylcs
 import re
+from loguru import logger
 
 def to_plain_text(article_content ):
     html_doc = readability.Document(str(article_content))
@@ -43,6 +44,7 @@ async def download_url(url):
     try:
         page_content = requests.get(url , headers = headers)
     except:
+        logger.info(f'time out for {url}')
         return None
 
     return page_content
@@ -58,5 +60,4 @@ async def download_urls_async(urls , post_process_fn):
     post_process_tasks = [post_process_fn(url , content) for url , content in zip(urls , results)]
     post_process_results = await asyncio.gather(*post_process_tasks)
     return post_process_results
-
 

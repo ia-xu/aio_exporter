@@ -1,1 +1,3 @@
-/root/miniconda3/envs/scrawl/bin/python /root/projects/aio_exporter/commands/cron_job.py
+*/20 * * * * PYTHONPATH=/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /root/projects/aio_exporter/commands/scrawler_cron_job.py
+*/15 * * * * PYTHONPATH=/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /root/projects/aio_exporter/commands/download_cron_job.py
+

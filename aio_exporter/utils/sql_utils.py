@@ -9,6 +9,10 @@ from datetime import datetime
 import pandas as pd
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import inspect, Column, Integer
+from sqlalchemy.sql import text
+from sqlalchemy.exc import OperationalError
+
 
 Base = declarative_base()
 
@@ -48,6 +52,8 @@ class ArticleStorage(Base):
     # 存储类型(文件或者是文件夹)
     storage_type = Column(String)
     created_at = Column(DateTime)
+    # 记录下载的尝试次数
+    download_count = Column(Integer)
 
 
 def create_database(source = ''):
@@ -203,7 +209,7 @@ def get_ids_not_in_artilce_storage(session):
 # Article Storage
 #---------------------------------------
 # 添加函数 insert_article_storage
-def upsert_article_storage(session, article_id, storage_path, status='尚未开始', storage_type='file'):
+def upsert_article_storage(session, article_id, storage_path, status='尚未开始', storage_type='file', download_count = 0):
     """
     Insert a new record into the ArticleStorage table or update an existing record if the article_id already exists.
     :param session: SQLAlchemy session object
@@ -219,6 +225,7 @@ def upsert_article_storage(session, article_id, storage_path, status='尚未开�
         existing_storage.storage_path = storage_path
         existing_storage.status = status
         existing_storage.storage_type = storage_type
+        existing_storage.download_count = download_count
         # existing_storage.created_at = datetime.now()
         logger.info(f"Updated storage record for article ID {article_id}")
     else:
@@ -228,14 +235,15 @@ def upsert_article_storage(session, article_id, storage_path, status='尚未开�
             storage_path=storage_path,
             status=status,
             storage_type=storage_type,
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            download_count = download_count
         )
         session.add(new_storage)
         logger.info(f"Inserted new storage record for article ID {article_id}")
 
     session.commit()
 
-def upsert_article_storage_status(session, article_id, status):
+def upsert_article_storage_status(session, article_id, status , count = None):
     """
     更新 article id 对应的 status 为新的 status。
 
@@ -248,6 +256,8 @@ def upsert_article_storage_status(session, article_id, status):
     if existing_storage:
         # Update the existing record's status
         existing_storage.status = status
+        if count is not None:
+            existing_storage.download_count = count
         session.commit()
         logger.info(f"Updated status for article ID {article_id} to {status}")
     else:
@@ -332,6 +342,31 @@ def clear_article_storage(session):
     session.query(ArticleStorage).delete()
     session.commit()
     print("ArticleStorage 表已清空")
+
+
+def reset_article_storage(session):
+    """清空 ArticleStorage 表中的所有记录，检查并添加 download_count 列"""
+    # 检查 download_count 列是否存在
+    inspector = inspect(session.bind)
+    columns = [col['name'] for col in inspector.get_columns('article_storage')]
+
+    if 'download_count' not in columns:
+        # 如果不存在 download_count 列，则添加该列
+        try:
+            # 清空表中的所有记录
+            session.query(ArticleStorage).delete()
+            session.commit()
+            print("ArticleStorage 表已清空")
+
+            add_column = text("ALTER TABLE article_storage ADD COLUMN download_count INTEGER")
+            session.execute(add_column)
+            session.commit()
+            print("Column 'download_count' 已添加到 'article_storage' 表.")
+        except OperationalError as e:
+            print(f"添加列时出错: {e}")
+    else:
+        print("Column 'download_count' 已存在于 'article_storage' 表中.")
+
 
 def group_articles_by_status(session, source):
     results = (

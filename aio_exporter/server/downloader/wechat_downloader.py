@@ -1,3 +1,4 @@
+import os
 import shutil
 import asyncio
 
@@ -5,6 +6,8 @@ import requests
 
 from aio_exporter.server.downloader.base_downloader import BaseDownloader
 from aio_exporter.utils.utils import get_work_dir
+from aio_exporter.utils import load_driver
+
 from loguru import logger
 from tqdm import tqdm
 from aio_exporter.utils import sql_utils
@@ -26,7 +29,11 @@ class WechatDownloader(BaseDownloader):
         super().__init__('wechat')
         self.batch_size = 5
         # 单次最多更新的数量
+        self.max_asssign_count = self.config.max_asssign_count
         self.max_download_size = self.config.max_download_size
+
+        # 用于加载一些需要javascript渲染的网页
+
 
     def assign_path_for_new_articles(self):
         # 检查更新的id,为这些id分配存储的路径
@@ -36,9 +43,13 @@ class WechatDownloader(BaseDownloader):
         logger.info(f'found {len(ids)} wechat articles to insert')
         articles = self.gather_articles(ids)
         locations = []
+        count = 0
         for _ , article in tqdm(articles.iterrows()):
             if article.url == 'https://none':
                 continue
+            count += 1
+            if count > self.max_asssign_count:
+                return locations
             # 分配存储路径,添加到库,将 状态变化为 '尚未开始'
             file_path = self.insert_and_assign_path(article)
             locations .append(
@@ -60,16 +71,21 @@ class WechatDownloader(BaseDownloader):
         account_dir.mkdir(exist_ok=True)
         title = self.clean_title(article.title)
 
-        file_path = account_dir /  f'{article.id}_{title}.md'
+        file_path = account_dir /  f'{article.id}_{title}.html'
         # 检查filepath 是否已经存在
         idx = 0
         while self.check_file_path_exists(file_path):
             # 更新位置
-            file_path = account_dir / f'{article.id}_{idx}_{title}.md'
+            file_path = account_dir / f'{article.id}_{idx}_{title}.html'
             idx += 1
-        logger.info(f'为账号{article.author} 文章分配路径到 {file_path.name}.md')
+        logger.info(f'为账号{article.author} 文章分配路径到 {file_path.name}.html')
         self.insert_assigned_path(
-            article.id , file_path , '尚未开始' , 'file')
+            article.id ,
+            file_path ,
+            '尚未开始' ,
+            'file',
+            0
+        )
         return file_path
 
     def clean_download(self):
@@ -83,63 +99,93 @@ class WechatDownloader(BaseDownloader):
 
     async def post_process_html(self, url , result):
         try:
-            media_dir = wechat_dir / 'media'
-            media_dir.mkdir(exist_ok=True)
-
             if result.status_code != 200:
-                return ''
+                return None
+
+            # 判断是否被删除
             soup = BeautifulSoup(result.content , 'html.parser')
+
+            maybe_delete =  soup.find(class_= 'weui-msg__text-area')
+            if maybe_delete:
+                maybe_delete = maybe_delete.text
+                if '已被发布者删除' in maybe_delete:
+                    return '已删除'
+
             text = ""
             for p in soup.find_all('p'):
                 text += p.text
+
+            if not text and soup.find_all(class_ = 'share_content_page'):
+                # 可能是一个需要动态加载的网页内容
+                logger.info('use chrome driver to render js webpage')
+                driver = load_driver(headless=True)
+                driver.get(url)
+                html = driver.page_source
+                soup = BeautifulSoup(html , 'html.parser')
+
+                text = ""
+                for p in soup.find_all('p'):
+                    text += p.text
+
             if '环境异常' in text or '去验证' in text:
                 return None
             article_content = soup.find('div', id='js_content')
-
-
-            # 删除一些不需要的内容
-            # code 的行数展示
-            code_snippets = article_content.find_all(class_ = 'code-snippet__line-index code-snippet__js')
-            for snippet in code_snippets:
-                snippet.extract()
-            # <br>换行符
-            for p in article_content.find_all('p'):
-                if p.find('br') and len(p.contents) == 1:
-                    # 占位符,可以省略
-                    p.extract()
-
-
-            # 对图片进行解析处理
-            images = []
-            # 下载图片
-            img_tags = article_content.find_all('img')
-            for idx, img_tag in enumerate(img_tags):
-                if img_tag.get('data-src') and not img_tag.get('src'):
-                    img_tag['src'] = img_tag['data-src']
-                    # 添加 alt ，区别于超链接，让转出来的 markdown 带有这个链接
-                    img_tag['alt'] = 'img'
-
             if not article_content:
                 return ""
+
             plan_text = ""
             p_tags = article_content.find_all('p')
             for p_tag in p_tags:
                 plan_text += p_tag.get_text() + "\n"
             plan_text = html_utils.clean_html(plan_text)
             if not plan_text:
-                return ''
+                return None
+            return str(soup)
 
-            markdown_text = html_utils.to_markdown(
-                article_content , plan_text
-            )
-            markdown_text = html_utils.clean_html(markdown_text)
-            return markdown_text
+            # # 删除一些不需要的内容
+            # # code 的行数展示
+            # code_snippets = article_content.find_all(class_ = 'code-snippet__line-index code-snippet__js')
+            # for snippet in code_snippets:
+            #     snippet.extract()
+            # # <br>换行符
+            # for p in article_content.find_all('p'):
+            #     if p.find('br') and len(p.contents) == 1:
+            #         # 占位符,可以省略
+            #         p.extract()
+            #
+            #
+            # # 对图片进行解析处理
+            # images = []
+            # # 下载图片
+            # img_tags = article_content.find_all('img')
+            # for idx, img_tag in enumerate(img_tags):
+            #     if img_tag.get('data-src') and not img_tag.get('src'):
+            #         img_tag['src'] = img_tag['data-src']
+            #         # 添加 alt ，区别于超链接，让转出来的 markdown 带有这个链接
+            #         img_tag['alt'] = 'img'
+            #
+            # markdown_text = html_utils.to_markdown(
+            #     article_content , plan_text
+            # )
+            # markdown_text = html_utils.clean_html(markdown_text)
+            # return markdown_text
         except:
             return None
 
-    async def download(self):
+    def get_no_download_in_task_list(self):
+        ids_need_download = self.gather_ids_with_status('尚未开始')
+        return len(ids_need_download)
+
+
+    async def download(self, new_article = True):
+        # new_article:  默认只尝试下载那些还没有下载过的文章
+
         # 关于代理，后续使用: https://blog.csdn.net/crayonjingjing/article/details/137596882
-        ids_need_download = self.gather_ids_without_downloaded()
+        status = '尚未开始'
+        if not new_article:
+            status = '下载失败'
+
+        ids_need_download = self.gather_ids_with_status(status)
         article_with_file_path = self.gather_article_with_storage(ids_need_download)
 
         article_with_file_path = article_with_file_path.sample(frac = 1).reset_index(drop = True)
@@ -164,19 +210,29 @@ class WechatDownloader(BaseDownloader):
                     continue
                 if not result:
                     # 说明下载失败
-                    self.upsert_status(row.id , '下载失败')
+                    logger.info(f'fail {row.url}')
+                    self.upsert_status(row.id , '下载失败' ,  row.download_count + 1)
                     status.append({'title':row.title ,'status':'下载失败'})
+                elif result == '已删除':
+                    logger.info(f'已删除 {row.url}')
+                    self.upsert_status(row.id, '已被删除', row.download_count + 1)
+                    status.append({'title': row.title, 'status': '已被删除'})
                 else:
                     # 说明下载成功
                     with open(row.storage_path, 'w', encoding='utf-8') as f:
                         f.write(result)
-                    self.upsert_status(row.id , '下载成功')
+                    self.upsert_status(row.id , '下载成功' , row.download_count + 1)
                     status.append({'title':row.title ,'status':'下载成功'})
         return status
 
 if __name__ == '__main__':
     wechat_downloader = WechatDownloader()
+    # reset
+    sql_utils.reset_article_storage(wechat_downloader.session)
     wechat_downloader.clean_download()
-    wechat_downloader.assign_path_for_new_articles()
+    # download
+    # wechat_downloader.assign_path_for_new_articles()
+    # asyncio.run(wechat_downloader.download())
 
-    asyncio.run(wechat_downloader.download())
+
+

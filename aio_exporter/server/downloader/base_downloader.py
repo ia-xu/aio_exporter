@@ -9,8 +9,7 @@ class BaseDownloader:
         self.source_name = source_name
         self.session = sql_utils.init_sql_session(self.source_name)
         config_file = get_work_dir() / 'aio_exporter' / 'server' / 'config.yaml'
-        self.config = Config.fromfile(config_file).scrawler[self.source_name]
-
+        self.config = Config.fromfile(config_file).downloader[self.source_name]
 
 
 
@@ -22,18 +21,19 @@ class BaseDownloader:
             self.session , ids
         )
 
-    def insert_assigned_path(self,id,file_path,status, file_type):
+    def insert_assigned_path(self,id,file_path,status, file_type,download_count):
         file_path = str(file_path)
         sql_utils.upsert_article_storage(
             self.session,
             id,
             file_path,
             status,
-            file_type
+            file_type,
+            download_count
         )
 
-    def upsert_status(self , id , status):
-        sql_utils.upsert_article_storage_status(self.session , id , status)
+    def upsert_status(self , id , status , count = None):
+        sql_utils.upsert_article_storage_status(self.session , id , status, count)
 
 
     def clean_title(self , title):
@@ -48,11 +48,11 @@ class BaseDownloader:
         file_path = str(file_path)
         return sql_utils.check_file_path_exists(self.session , file_path)
 
-    def gather_ids_without_downloaded(self):
+    def gather_ids_with_status(self , status = '尚未开始'):
         # 返回所有尚未下载的内容
         return sql_utils.gather_ids_by_storage_status(
             self.session ,
-            '尚未开始',
+            status,
             source=self.source_name
         )
 

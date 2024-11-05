@@ -7,7 +7,7 @@ from aio_exporter.utils import get_work_dir
 work_dir = get_work_dir()
 
 
-def main():
+def scrawl_stats():
     session = sql_utils.init_sql_session('wechat')
     all_data = sql_utils.get_articles_by_ids(session)
     all_data = all_data[all_data.url != 'https://none']
@@ -28,10 +28,11 @@ def main():
 
 
     log_files = work_dir / 'commands' / 'scrawler_cron_log.txt'
+    log = ""
     if log_files.exists():
         st.write('查看日志')
         with open(log_files) as f:
             log = f.read()
     st.text_area('日志内容展示', log)
 
-main()
+scrawl_stats()
