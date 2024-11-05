@@ -15,6 +15,8 @@ def main():
     st.write('## 已获取链接情况')
     st.data_editor(stats)
 
+    st.write(f'### 获取链接总数: {len(all_data)}')
+
     st.write('## 链接展示')
     selection = st.selectbox('选择展示内容', ['ALL'] + list(stats.index), 0)
     if selection != 'ALL':
@@ -25,7 +27,7 @@ def main():
     st.data_editor(df.loc[:,['author','issue_date','title','url']], height = 400)
 
 
-    log_files = work_dir / 'commands' / 'cron_log.txt'
+    log_files = work_dir / 'commands' / 'scrawler_cron_log.txt'
     if log_files.exists():
         st.write('查看日志')
         with open(log_files) as f:

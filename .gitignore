@@ -2,3 +2,4 @@
 database
 cookies
 .idea
+__pycache__/

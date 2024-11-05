@@ -12,7 +12,7 @@ class BaseScrawler:
         self.source_name = source_name
         self.driver = load_driver(headless=headless) # 非debug的情况可以采用静默模式
         config_file = get_work_dir() / 'aio_exporter' / 'server' / 'config.yaml'
-        self.config = Config.fromfile(config_file)[self.source_name]
+        self.config = Config.fromfile(config_file).scrawler[self.source_name]
         # 在 workdir 下面创建一个 database,并初始化 database下的数据库
         database = get_work_dir() / 'database'
         database.mkdir(exist_ok=True)

@@ -1,11 +1,15 @@
 from aio_exporter.utils import sql_utils
 
 import re
+from mmengine import Config
+from aio_exporter.utils import get_work_dir
 
 class BaseDownloader:
     def __init__(self, source_name):
         self.source_name = source_name
         self.session = sql_utils.init_sql_session(self.source_name)
+        config_file = get_work_dir() / 'aio_exporter' / 'server' / 'config.yaml'
+        self.config = Config.fromfile(config_file).scrawler[self.source_name]
 
 
 

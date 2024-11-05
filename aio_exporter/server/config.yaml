@@ -1,13 +1,18 @@
 # 统一管理所有需要搜集的账号
+scrawler:
+  wechat:
+    SubscriptionAccounts:
+      - 蓝鲸课堂
+      - 深蓝保
+      - 沐熙花园
+      - 明亚保险经纪
+      - 保险一哥
+      - 蜗牛保险经纪
+      - 关哥说险
+    max_count: 300
+    num_for_once: 15
 
-wechat:
-  SubscriptionAccounts:
-    - 蓝鲸课堂
-    - 深蓝保
-    - 沐熙花园
-    - 明亚保险经纪
-    - 保险一哥
-    - 蜗牛保险经纪
-    - 关哥说险
-  max_count: 300
-  num_for_once: 15
+downloader:
+  wechat:
+    # 单次做多下载文章数量
+    max_download_size : 100

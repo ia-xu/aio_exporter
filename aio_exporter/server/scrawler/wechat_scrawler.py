@@ -26,7 +26,7 @@ class SearchUrls:
 
 class WechatScrawler(BaseScrawler):
     def __init__(self):
-        super().__init__("wechat",False)
+        super().__init__("wechat",True)
         cookies = load_cookies("wechat")
         logger.info('create driver')
         login = WechatLogin(**cookies)
@@ -95,7 +95,9 @@ class WechatScrawler(BaseScrawler):
         # 判断是否 up 发布了新的内容
         # 检查历史数据，分析已经获取了多少内容的数据
         count_article_by_author = self.count_by_author(account)
-        return publish_count - count_article_by_author
+        new_article_num = publish_count - count_article_by_author
+        logger.info(f'数据库需要更新 {account} 的文章数量为 : {new_article_num}')
+        return new_article_num
 
     def find_last(self, account , fake_id):
         # 先进行一个小的获取,拿到 page count
@@ -117,7 +119,7 @@ class WechatScrawler(BaseScrawler):
                 total_num = start + article_num
                 break
 
-        logger.info(f'确认! {account} 文章数量更新为 {total_num}')
+        logger.info(f'确认! {account} 文章数量总数为 {total_num}')
         return total_num
 
 
@@ -214,11 +216,23 @@ class WechatScrawler(BaseScrawler):
         return publish_page
 
     def walk(self):
+        # 首先统计每一个部分所需要更新的数量
+        stats = self.count()
+        # 根据 stats 进行权重分配
+        total_updates = sum( v for v in stats.values())
+        stats = { k : int(v / total_updates * self.max_count) for k ,v in stats.items()}
+
+        logger.info(f'current search stats: {stats}')
         new_articles = []
         each_count = self.max_count // len(self.config.SubscriptionAccounts)
         for account in self.config.SubscriptionAccounts:
+            if stats[account] <= 10:
+                # 要更新的文章数量不多，不过多的占用查询资源
+                logger.info(f'Skip {account} for article num {stats[account]} not too many')
+                continue
+
             fake_id = self.search_bizno(account)
-            articles = self.walk_through_article(account , fake_id,  max_count = each_count)
+            articles = self.walk_through_article(account , fake_id,  max_count = stats[account])
             new_articles.extend(articles)
             if len(new_articles) >= self.max_count:
                 break

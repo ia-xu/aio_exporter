@@ -4,14 +4,17 @@ import sys
 from pathlib import Path
 import datetime
 import json
+import shutil
+from aio_exporter.utils import get_work_dir
+
 
 
 def log(message):
-    log_file = Path(__file__).parent / 'cron_log.txt'
+    log_file = Path(__file__).parent / 'scrawler_cron_log.txt'
     with open(log_file, 'a+', encoding='utf-8') as f:
         now = datetime.datetime.now()
         f.write(f'Time: {now.strftime("%Y-%m-%d %H:%M")}\n')
-        f.write(f'{message}\n!')
+        f.write(f'{message}!\n')
 
 if __name__ == '__main__':
     # 检查登录 cookie 是否过期
@@ -41,3 +44,8 @@ if __name__ == '__main__':
         'http://127.0.0.1:31006/api/wechat/get_new_wechat'
     )
     log('下载完成')
+
+    db_file = get_work_dir() / 'database' / 'wechat_articles.db'
+    bak_file = get_work_dir() / 'database' / 'wechat_articles.db.bak'
+    shutil.copy(db_file , bak_file)
+    log('备份完成')

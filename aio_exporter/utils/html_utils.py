@@ -22,46 +22,41 @@ def to_markdown(article_content, plan_text):
 
     start = min([_ for _ in res if _ != -1])
     end = max([_ for _ in res if _ != -1])
-    valid_md_text = markdown_text[start:end]
+    valid_md_text = markdown_text[start:end + 1 ]
     return valid_md_text
+
 
 def clean_html(text):
     text = text.strip().replace(u'\u3000', u' ').replace(u'\xa0', u' ')
     text = re.sub(r'\n{3,}', '\n\n', text)
+    text = text.replace('﻿','')
     return text
 
 
-def download_url(url):
+async def download_url(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
     }
     # 简单地进行 url 请求
     rand = random.randint(1,3)
     time.sleep(3)
-    page_content = requests.get(url , headers = headers)
+    try:
+        page_content = requests.get(url , headers = headers)
+    except:
+        return None
+
     return page_content
 
-def download_urls(urls , post_process_fn):
-    results = []
-    for url in urls:
-        try:
-            page_content = download_url(url)
-            results.append(post_process_fn(url , page_content))
-        except:
-            results.append(None)
-    return results
+
 
 
 async def download_urls_async(urls , post_process_fn):
-    async def main():
-        tasks = [download_url(url) for url in urls]
-        results = await asyncio.gather(*tasks)
+    tasks = [download_url(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+    if post_process_fn is None:
+        return results
+    post_process_tasks = [post_process_fn(url , content) for url , content in zip(urls , results)]
+    post_process_results = await asyncio.gather(*post_process_tasks)
+    return post_process_results
 
-        post_process_tasks = [post_process_fn(url , content) for url , content in zip(urls , results)]
-        post_process_results = await asyncio.gather(*post_process_tasks)
-        return post_process_results
-
-
-    results = await main()
-    return results
 
