@@ -28,6 +28,25 @@ scrawler:
       - 关哥说险
     max_count: 300
     num_for_once: 15
+  bilibili:
+    SubscriptionAccounts:
+      - name: 二姐聊保障
+        id: 353017413
+      - name: 明亚保险经纪卢华营
+        id: 473336381
+      - name: 深蓝保测评
+        id: 702718353
+      - name: Ginger的保险笔记本
+        id: 2087454587
+      - name: 阿比Dal
+        id: 548088429
+      - name: 浪浪历险计
+        id: 513517108
+      - name: Newman老师_龙博老师
+        id: 295438644
+      - name: 寿训笔记
+        id: 505753530
+    max_count: 300
 
 downloader:
   wechat:

@@ -106,3 +106,27 @@ def markdown_insert_images(markdown):
         if os.path.exists(image_path):
             markdown = markdown.replace(image_markdown, img_to_html(image_path, image_alt))
     return markdown
+
+
+def parse_bilibili_time(time_str):
+    import datetime
+
+    # 正则表达式匹配不同的时间格式
+    patterns = [
+        (r'(\d+)分钟前', lambda x: datetime.datetime.now() - datetime.timedelta(minutes=int(x))),
+        (r'(\d+)小时前', lambda x: datetime.datetime.now() - datetime.timedelta(hours=int(x))),
+        (r'昨天', lambda: datetime.datetime.now() - datetime.timedelta(days=1)),
+        (
+        r'^(\d+)-(\d+)$', lambda x, y: datetime.datetime.strptime(f"{datetime.datetime.now().year}-{x}-{y}", "%Y-%m-%d")),
+        (r'(\d{4})-(\d{1,2})-(\d{1,2})', lambda x, y, z: datetime.datetime.strptime(f"{x}-{y}-{z}", "%Y-%m-%d"))
+    ]
+
+    for pattern, func in patterns:
+        match = re.match(pattern, time_str)
+        if match:
+            dt = func(*match.groups())
+            if dt.date() < datetime.datetime.now().date():
+                dt = dt.replace(hour=0, minute=0, second=0)
+            return dt
+
+    return time_str  # 如果没有匹配的模式，返回None
