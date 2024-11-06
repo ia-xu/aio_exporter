@@ -2,11 +2,28 @@
 scrawler:
   wechat:
     SubscriptionAccounts:
-      - 蓝鲸课堂
+      - 奇点智保
+      - 金惠智保
+      - 保险师
+      - 保险一哥
+      - 轻松保严选
+      - 慧择保险规划
       - 深蓝保
+      - 新一站保险
+      - 学霸说保险
+      - 蓝鲸insurance
+      - 蓝鲸保险之家
+      - 保险万事通
+      - 今日保
+      - 中国保险行业协会
+      - 优选保
+      - 保险文化
+      - 太平洋寿险
+      - 太保长航加油站
+      - 中国太平洋保险
+      - 蓝鲸课堂
       - 沐熙花园
       - 明亚保险经纪
-      - 保险一哥
       - 蜗牛保险经纪
       - 关哥说险
     max_count: 300
@@ -15,6 +32,6 @@ scrawler:
 downloader:
   wechat:
     # 单次做多下载文章数量
-    max_download_size : 50
+    max_download_size : 120
     # 单次最多额外创建 200 条任务
     max_asssign_count: 200

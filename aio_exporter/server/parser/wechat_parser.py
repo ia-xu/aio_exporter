@@ -1,6 +1,6 @@
 
 from bs4 import BeautifulSoup
-from .base_parser import BaseParser
+from aio_exporter.server.parser.base_parser import BaseParser
 from pathlib import Path
 import markdownify
 from aio_exporter.utils import html_utils
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     wechat_downloader = WechatDownloader()
     parser = WechatParser()
 
-    url = 'https://mp.weixin.qq.com/s?__biz=MzUxODY4MzE0NQ==&mid=2247484433&idx=1&sn=b7b7fefc4c8003339c2c436d99c3b044&chksm=f9846b77cef3e261452f94cc05a5a6ecf01c9b3bf9f08ade2affabc1392b1af23e208a694785#rd'
+    url = 'https://mp.weixin.qq.com/mp/appmsg/show?__biz=MjM5MTUyMjg0MA==&appmsgid=10000123&itemidx=1'
 
 
     async def unitest(url):

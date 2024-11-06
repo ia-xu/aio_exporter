@@ -255,4 +255,5 @@ if __name__ == "__main__":
     scrawler = WechatScrawler()
     # scrawler.walk()
     # scrawler.login_status()
-    scrawler.walk()
+    # scrawler.walk()
+    print(scrawler.count())

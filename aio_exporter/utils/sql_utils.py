@@ -380,3 +380,25 @@ def group_articles_by_status(session, source):
         .all()
     )
     return results
+
+def get_storage(session):
+    """
+    获取 article_storage 表中的所有记录
+
+    :param session: SQLAlchemy 会话对象
+    :return: 包含所有记录的列表，每条记录为字典
+    """
+    articles = session.query(ArticleStorage).all()  # 查询所有记录
+    result = []
+
+    for article in articles:
+        result.append({
+            'id': article.id,
+            'storage_path': article.storage_path,
+            'status': article.status,
+            'storage_type': article.storage_type,
+            'created_at': article.created_at,
+            'download_count': article.download_count
+        })
+
+    return result

@@ -115,6 +115,9 @@ class WechatDownloader(BaseDownloader):
             for p in soup.find_all('p'):
                 text += p.text
 
+            if '该页面不存在' in text:
+                return '不存在'
+
             if not text and soup.find_all(class_ = 'share_content_page'):
                 # 可能是一个需要动态加载的网页内容
                 logger.info('use chrome driver to render js webpage')
@@ -214,9 +217,13 @@ class WechatDownloader(BaseDownloader):
                     self.upsert_status(row.id , '下载失败' ,  row.download_count + 1)
                     status.append({'title':row.title ,'status':'下载失败'})
                 elif result == '已删除':
-                    logger.info(f'已删除 {row.url}')
+                    logger.info(f'文章 {row.title} 已被删除!')
                     self.upsert_status(row.id, '已被删除', row.download_count + 1)
-                    status.append({'title': row.title, 'status': '已被删除'})
+                    status.append({'title': row.title, 'status': '失效'})
+                elif result == '不存在':
+                    logger.info(f'文章 {row.title} 不存在!')
+                    self.upsert_status(row.id, '不存在', row.download_count + 1)
+                    status.append({'title': row.title, 'status': '失效'})
                 else:
                     # 说明下载成功
                     with open(row.storage_path, 'w', encoding='utf-8') as f:

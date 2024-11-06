@@ -1,3 +1,5 @@
+import time
+
 import requests
 import os
 import sys
@@ -6,7 +8,7 @@ import datetime
 import json
 import shutil
 from aio_exporter.utils import get_work_dir
-
+import random
 
 
 def log(message):
@@ -38,6 +40,8 @@ if __name__ == '__main__':
         # 不需要频繁更新所有的内容
         log('更新文章不多!')
         sys.exit(0)
+
+    time.sleep(random.random() * 5)
     log('开始下载')
     # 获取文章
     response = requests.get(

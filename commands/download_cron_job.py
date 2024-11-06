@@ -41,7 +41,7 @@ if __name__ == '__main__':
     for result in results:
         if result['status'] == '下载成功' :
             success += 1
-        elif result['status'] == '已被删除':
+        elif result['status'] == '失效':
             delete += 1
         else:
             fail += 1
