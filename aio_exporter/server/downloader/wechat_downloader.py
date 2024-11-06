@@ -3,7 +3,7 @@ import shutil
 import asyncio
 
 import requests
-
+from functools import partial
 from aio_exporter.server.downloader.base_downloader import BaseDownloader
 from aio_exporter.utils.utils import get_work_dir
 from aio_exporter.utils import load_driver
@@ -97,7 +97,8 @@ class WechatDownloader(BaseDownloader):
         wechat_dir = database / 'wechat'
         wechat_dir.mkdir(exist_ok=True)
 
-    async def post_process_html(self, url , result):
+    async def post_process_html(self, url , result, new_article = True):
+        # 如果 new article == False , 表明现在处理的都是一些用 requests 处理失败的文章
         try:
             if result.status_code != 200:
                 logger.info(result.content)
@@ -150,6 +151,37 @@ class WechatDownloader(BaseDownloader):
                 plan_text += p_tag.get_text() + "\n"
             plan_text = html_utils.clean_html(plan_text)
             if not plan_text:
+
+                # 有一些只发图但是无文字内容的url
+                toutu = soup.find(class_ = 'page_top_area')
+                if toutu:
+                    extra = article_content.find(class_='rich_media_meta_area_extra')
+                    extra.extract()
+                    left = html_utils.clean_html(markdownify.markdownify(str(article_content)))
+                    if not left:
+                        return '无文字内容'
+                else:
+                    clean_content = html_utils.clean_html(markdownify.markdownify(str(article_content)))
+                    if clean_content == '![]()':
+                        return '无文字内容'
+
+                # 考虑可能是一个微信的想法
+                share_notice = article_content.find(class_ = 'share_notice')
+                if share_notice:
+                    text = html_utils.clean_html(share_notice.text)
+                    if text:
+                        # 说明是一个微信想法
+                        return str(soup)
+
+                # 找 section
+                plan_text = ""
+                p_tags = article_content.find_all(['p','section'])
+                for p_tag in p_tags:
+                    plan_text += p_tag.get_text() + "\n"
+                plan_text = html_utils.clean_html(plan_text)
+                if plan_text:
+                    return str(soup)
+
                 return None
             return str(soup)
 
@@ -214,7 +246,8 @@ class WechatDownloader(BaseDownloader):
                 return status
             urls = batch['url'].tolist()  # 获取当前批次的 URL
             # 每次调用 asyncio 的方法，一次性获取10篇文章的 html
-            results = await html_utils.download_urls_async(urls ,self.post_process_html)  # 下载 HTML
+            post_fn = partial(self.post_process_html , new_article = new_article)
+            results = await html_utils.download_urls_async(urls ,post_fn)  # 下载 HTML
             for (_ ,row) ,result in zip(batch.iterrows(),results):
                 if row.url == 'https://none':
                     self.upsert_status(row.id , '无效数据')
@@ -232,6 +265,9 @@ class WechatDownloader(BaseDownloader):
                     logger.info(f'文章 {row.title} 不存在!')
                     self.upsert_status(row.id, '不存在', row.download_count + 1)
                     status.append({'title': row.title, 'status': '失效'})
+                elif result == '无文字内容':
+                    self.upsert_status(row.id, '无文字内容', row.download_count + 1)
+                    status.append({'title': row.title, 'status': '无文字内容'})
                 else:
                     # 说明下载成功
                     with open(row.storage_path, 'w', encoding='utf-8') as f:
@@ -245,11 +281,11 @@ class WechatDownloader(BaseDownloader):
 if __name__ == '__main__':
     wechat_downloader = WechatDownloader()
     # reset
-    sql_utils.reset_article_storage(wechat_downloader.session)
-    wechat_downloader.clean_download()
+    # sql_utils.reset_article_storage(wechat_downloader.session)
+    # wechat_downloader.clean_download()
     # download
     # wechat_downloader.assign_path_for_new_articles()
-    # asyncio.run(wechat_downloader.download())
+    asyncio.run(wechat_downloader.download(new_article=False))
 
 
 

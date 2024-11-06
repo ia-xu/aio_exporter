@@ -41,6 +41,8 @@ def clean_html(text):
     cleaned_lines = [line for line in lines if not (all(c in " ,\t" for c in line) and ',' in line) ]
     # 合并回一个文本字符串
     text =  "\n".join(cleaned_lines)
+
+    text = text.replace('\u202e','').replace('\u202c','')
     return text
 
 

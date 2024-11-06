@@ -47,7 +47,7 @@ class WechatParser(BaseParser):
     def parse(self, html_file_path):
         with open(html_file_path, encoding='utf-8') as f:
             html = f.read()
-        soup =BeautifulSoup(html,'html.parser')
+        soup = BeautifulSoup(html,'html.parser')
 
         toutu = soup.find(class_ = 'page_top_area')
         md_toutu = ""
@@ -55,18 +55,24 @@ class WechatParser(BaseParser):
             # 在 markdown 的上方插入头图
             md_toutu = self.format_toutu(toutu)
 
-        article_content = soup.find('div', id='js_content')
-        self.ignore_useless(article_content)
-        self.format_img(article_content)
+        if soup.find(class_ = 'share_notice'):
+            # 说明这是一个想法
+            md_text = markdownify.markdownify(str(soup.find(class_ = 'share_notice')))
+            md_text = html_utils.clean_html(md_text)
+        else:
+            article_content = soup.find('div', id='js_content')
+            self.ignore_useless(article_content)
+            self.format_img(article_content)
+            extra_md = ''
+            extra = article_content.find(class_ = 'rich_media_meta_area_extra')
+            if extra:
+                extra_md = extra.text.replace(',  ,','  ')
+                extra.extract()
+            md_zw = markdownify.markdownify(str(article_content))
+            md_zw = html_utils.clean_html(md_zw)
+            md_text = md_zw + '\n' + extra_md
 
-        extra_md = ''
-        extra = article_content.find(class_ = 'rich_media_meta_area_extra')
-        if extra:
-            extra_md = extra.text.replace(',  ,','  ')
-            extra.extract()
-
-        md_zw = markdownify.markdownify(str(article_content))
-        markdown_text = html_utils.clean_html(md_toutu + md_zw + '\n' + extra_md)
+        markdown_text = html_utils.clean_html(md_toutu + md_text)
         return markdown_text
 
 if __name__ == '__main__':
@@ -77,7 +83,7 @@ if __name__ == '__main__':
     wechat_downloader = WechatDownloader()
     parser = WechatParser()
 
-    url = 'https://mp.weixin.qq.com/s/DOgJX0whawipiC_Ewq44zA'
+    url = 'https://mp.weixin.qq.com/s?__biz=MzAwNDQ4OTYzMw==&mid=2649544077&idx=1&sn=6c1a7a11be4e2466ac02bc1097b66289&chksm=83335d43b444d4550cd5e20027c81378ecd62ec65ddf431316551a2cfb28289f1f9d0e7d224b#rd'
 
     async def unitest(url):
         result = await html_utils.download_url(url)
