@@ -1,3 +1,4 @@
+import copy
 import json
 
 from aio_exporter.server.scrawler.base_scrawler import BaseScrawler
@@ -5,7 +6,11 @@ import time
 import random
 from selenium.webdriver.common.by import By
 from loguru import logger
+from selenium.webdriver.common.action_chains import ActionChains
+
+from aio_exporter.utils import get_work_dir, load_driver, get_headers, load_cookies
 from bs4 import BeautifulSoup
+from aio_exporter.utils.struct import Login
 from aio_exporter.utils import html_utils
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,31 +19,84 @@ import numpy as np
 # 添加了bilibili视频的scrawler
 class BilibiliScrawler(BaseScrawler):
     def __init__(self):
-        super().__init__("bilibili", False)
+        super().__init__("bilibili", True)
         self.max_count = self.config.max_count
 
+        # 尝试添加 cookie, 简化流程
+        # 先随便打开一个用户的主页
+        # 避免第一次打开网页被要求登录
+        # load cookie
+        # logger.info('load cookie')
+        # self.driver.get('https://space.bilibili.com/405067166')
+        # cookies = load_cookies("bilibili")
+        # login = Login(**cookies)
+        # for cookie in login.cookies:
+        #     self.driver.add_cookie(cookie)
+        # self.driver.get('https://space.bilibili.com/405067167')
+        # logger.info('create cookie done')
     def walk(self):
         stats = self.count()
-        stats_log = { self.get_name_by_uid(uid): c for uid , c in stats.items()}
-        logger.info(f'找到 up 更新视频数量为 : {stats_log}')
 
-        total_updates = sum( v for v in stats.values())
+        total_updates = sum( v for v in stats.values()) + 1e-5
         stats = { k : int(v / total_updates * self.max_count) for k ,v in stats.items()}
+        articles = []
         for account in self.config.SubscriptionAccounts:
+            if account['id'] not in stats:
+                continue
             if stats[account['id']] < 10:
                 continue
+            articles += self.walk_through_article(account['name'], account['id'], max_count=stats[account['id']])
+        return articles
 
-            articles = self.walk_through_article(account['name'], account['id'], max_count=stats[account['id']])
 
+    def wait(self):
+        # 等待页面加载完成
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
+        # 获取页面的宽度和高度
+        body = self.driver.find_element(By.TAG_NAME, 'body')
+        body_width = body.size['width']
+        body_height = body.size['height']
+
+        # 计算页面中心的坐标
+        center_x = body_width / 2
+        center_y = body_height / 2
+
+        # 使用ActionChains将鼠标移动到页面中心
+        actions = ActionChains(self.driver)
+        actions.move_to_element_with_offset(body, center_x, center_y).perform()
+
+        # 模拟滚动
+        time.sleep(2)
+        self.driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(3)
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    def click(self, close_class):
+        ele = self.driver.find_elements(
+            By.CLASS_NAME, close_class
+        )[0]
+        action = ActionChains(self.driver)
+        action.move_to_element(ele).perform()  # 执行悬停操作
+        action.click(ele).perform()
 
     def walk_through_article(self, up_name , uid, max_count = 200):
         # 计算当前需要下载的内容数量
+        logger.info(f'账号 {up_name} 最多搜集 {max_count} 个视频')
         count = self.video_num(uid)
-        count_article_by_author = self.count_by_author(up_name)
+        count_article_by_author = self.count_by_author(uid)
         need_update_count = count - count_article_by_author
 
         url = f"https://space.bilibili.com/{uid}/video"
-        self.driver.get(url)
+        self.driver.get(url + f'?tid=0&pn=1&keyword=&order=pubdate')
+        self.wait()
+
+
+        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        if '扫描二维码登录' in soup.text:
+            # 找到 叉叉，给他点掉
+            # 说明 ip 暂时被封住了，暂时不调用
+            logger.info('访问次数过多,请稍后再试')
+            return []
 
         # 一共要获取 max_count ， 不断翻页，直到全部获取
         new_updates = self.gather_video_on_page()
@@ -48,9 +106,25 @@ class BilibiliScrawler(BaseScrawler):
         updates = []
         c = np.ceil(need_update_count / num_in_on_page)
         for pn in range(int(c) , 0, -1):
+            logger.info(f'正在浏览 {up_name} 的第 {pn} 页...')
             self.driver.get(url + f'?tid=0&pn={pn}&keyword=&order=pubdate')
+            self.wait()
+
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            if '扫描二维码登录' in soup.text:
+                # 说明遇到了反爬虫
+                break
+
             time.sleep(2 + random.random() * 3)
             updates += self.gather_video_on_page()
+            if len(updates) > max_count:
+                # 不要一次性翻页太多
+                logger.info('翻页结束')
+                break
+
+        if not updates:
+            return []
+
         valid_updates = []
         hash_ = set()
         for u in updates:
@@ -63,7 +137,7 @@ class BilibiliScrawler(BaseScrawler):
         titles = []
         for video_info in valid_updates:
             if len(titles) >= max_count:
-                logger.info(f'已经为账号 {up_name} 找到 {len(titles)} 个视频')
+                logger.info(f'找到 {up_name} \t {len(titles)}')
                 return titles
             meta_info = {
                 'up_name' : up_name
@@ -86,6 +160,7 @@ class BilibiliScrawler(BaseScrawler):
     def gather_video_on_page(self):
         soup = BeautifulSoup(self.driver.page_source, 'html.parser')
         current_page_update = []
+
         for li in soup.find(id='submit-video-list').find(class_='clearfix cube-list').find_all('li'):
             link = li.find('a', class_='title')
             if link is None:
@@ -114,22 +189,44 @@ class BilibiliScrawler(BaseScrawler):
     def video_num(self, uid):
         url = f"https://space.bilibili.com/{uid}/video"
         self.driver.get(url)
-        time.sleep(random.random() * 3)
-        e = self.driver.find_element(By.CLASS_NAME, 'contribution-list-container')
-        count = e.find_elements(By.CLASS_NAME, 'num')[0].text
-        count = int(count)
+        time.sleep(3 + random.random() * 3)
+
+        if 'upload' in self.driver.current_url :
+            e = self.driver.find_element(By.CLASS_NAME , 'upload-sidenav')
+            count = int(e.text.split('\n')[1])
+        else:
+            e = self.driver.find_element(By.CLASS_NAME, 'contribution-list-container')
+            count = e.find_elements(By.CLASS_NAME, 'num')[0].text
+            count = int(count)
         return count
 
 
     def count(self):
         # 统计每一个up主目前总共发布了多少的视频
+        total = 0
+
         stats = {}
-        for data in self.config.SubscriptionAccounts:
+
+        # 避免对某一个特定账号访问多次
+        accounts = copy.deepcopy(self.config.SubscriptionAccounts)
+        random.shuffle(accounts)
+
+        for data in accounts:
             up_name = data["name"]
             uid = data["id"]
             count = self.video_num(uid)
+            logger.info(f'找到 up {up_name} 的更新数量为 {count}')
             exists_count = self.count_by_author(uid)
             stats[uid] = count - exists_count
+
+            total += count - exists_count
+            if total > self.max_count:
+                # 集中在这几个账号上进行搜集
+                # 这几个账号的更新视频数量已经处理不过来了
+                break
+
+        stats_log = {self.get_name_by_uid(uid): c for uid, c in stats.items()}
+        logger.info(f'需要新入库的视频数量为: {stats_log}')
         return stats
 
 
