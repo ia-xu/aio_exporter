@@ -129,6 +129,8 @@ class WechatDownloader(BaseDownloader):
                 text = ""
                 for p in soup.find_all('p'):
                     text += p.text
+                # 及时关闭
+                driver.close()
 
             if '环境异常' in text or '去验证' in text:
                 return None
