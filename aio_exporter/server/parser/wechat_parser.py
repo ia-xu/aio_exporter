@@ -41,7 +41,7 @@ class WechatParser(BaseParser):
                 images.append(
                     f'![img]({image["src"]})'
                 )
-        return '## 头图 \n{} ##正文\n'.format('\n\n'.join(images))
+        return '## 头图 \n{}\n\n## 正文\n\n'.format('\n\n'.join(images))
 
 
     def parse(self, html_file_path):
@@ -59,8 +59,14 @@ class WechatParser(BaseParser):
         self.ignore_useless(article_content)
         self.format_img(article_content)
 
+        extra_md = ''
+        extra = article_content.find(class_ = 'rich_media_meta_area_extra')
+        if extra:
+            extra_md = extra.text.replace(',  ,','  ')
+            extra.extract()
+
         md_zw = markdownify.markdownify(str(article_content))
-        markdown_text = html_utils.clean_html(md_toutu + md_zw)
+        markdown_text = html_utils.clean_html(md_toutu + md_zw + '\n' + extra_md)
         return markdown_text
 
 if __name__ == '__main__':
@@ -71,8 +77,7 @@ if __name__ == '__main__':
     wechat_downloader = WechatDownloader()
     parser = WechatParser()
 
-    url = 'https://mp.weixin.qq.com/mp/appmsg/show?__biz=MjM5MTUyMjg0MA==&appmsgid=10000123&itemidx=1'
-
+    url = 'https://mp.weixin.qq.com/s/DOgJX0whawipiC_Ewq44zA'
 
     async def unitest(url):
         result = await html_utils.download_url(url)

@@ -63,6 +63,11 @@ def download():
 
 
     file_path = filter_df[filter_df.title == select_article]
+
+    url = file_path['url'].values[0]
+    st.write(f'- 原文链接: {url}')
+    st.divider()
+
     storage_path = file_path['storage_path'].values[0]
 
     md_text = parser.parse(storage_path)

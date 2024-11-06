@@ -100,6 +100,7 @@ class WechatDownloader(BaseDownloader):
     async def post_process_html(self, url , result):
         try:
             if result.status_code != 200:
+                logger.info(result.content)
                 return None
 
             # 判断是否被删除
@@ -110,6 +111,11 @@ class WechatDownloader(BaseDownloader):
                 maybe_delete = maybe_delete.text
                 if '已被发布者删除' in maybe_delete:
                     return '已删除'
+                if '此内容因违规无法查看' in maybe_delete:
+                    return '已删除'
+                if '经审核涉嫌侵权' in maybe_delete:
+                    return '已删除'
+
 
             text = ""
             for p in soup.find_all('p'):
@@ -230,6 +236,8 @@ class WechatDownloader(BaseDownloader):
                     # 说明下载成功
                     with open(row.storage_path, 'w', encoding='utf-8') as f:
                         f.write(result)
+                    prefix = '' if new_article else '重新'
+                    logger.info( row.title + ':' + prefix + '下载成功')
                     self.upsert_status(row.id , '下载成功' , row.download_count + 1)
                     status.append({'title':row.title ,'status':'下载成功'})
         return status

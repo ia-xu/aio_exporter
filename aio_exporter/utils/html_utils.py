@@ -34,6 +34,13 @@ def clean_html(text):
     text = text.strip().replace(u'\u3000', u' ').replace(u'\xa0', u' ')
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = text.replace('﻿','')
+
+    # 删掉不重要的行
+    lines = text.splitlines()
+    # 过滤掉只有空格和逗号的行
+    cleaned_lines = [line for line in lines if not (all(c in " ,\t" for c in line) and ',' in line) ]
+    # 合并回一个文本字符串
+    text =  "\n".join(cleaned_lines)
     return text
 
 

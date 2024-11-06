@@ -18,11 +18,15 @@ def scrawl_stats():
     st.write(f'### 获取链接总数: {len(all_data)}')
 
     st.write('## 链接展示')
+
     selection = st.selectbox('选择展示内容', ['ALL'] + list(stats.index), 0)
     if selection != 'ALL':
         df = all_data[all_data.author == selection]
     else:
         df  = all_data
+
+    num = st.slider('选择展示的条目数量', 0, len(df) , min(len(df) , 50))
+    df = df.sample(num  , replace = False)
 
     st.data_editor(df.loc[:,['author','issue_date','title','url']], height = 400)
 

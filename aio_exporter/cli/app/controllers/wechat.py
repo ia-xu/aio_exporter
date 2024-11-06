@@ -25,11 +25,12 @@ class WechatController(Controller):
     async def check_login(self) -> bool:
         # 利用 scrawler 做一下爬取
         try:
-            scrawler = WechatScrawler()
-            # name = '深蓝保'
-            # fake_id = scrawler.search_bizno(name)
-            # scrawler.count_new_article(name , fake_id)
-            status = scrawler.login_status()
+            # scrawler = WechatScrawler()
+            with WechatScrawler() as scrawler:
+                # name = '深蓝保'
+                # fake_id = scrawler.search_bizno(name)
+                # scrawler.count_new_article(name , fake_id)
+                status = scrawler.login_status()
             return status
         except:
             import traceback
@@ -45,23 +46,24 @@ class WechatController(Controller):
             json.dump(login , f , ensure_ascii=False , indent=4)
 
         # 尝试 login
-        scrawler = WechatScrawler()
-        status = scrawler.login_status()
+        # scrawler = WechatScrawler()
+        with WechatScrawler() as scrawler:
+            status = scrawler.login_status()
         return status
 
 
     @get("/get_new_wechat")
     async def update_wechat_articles(self):
-        scrawler = WechatScrawler()
-        new_articles = scrawler.walk()
-        scrawler.close()
+        # scrawler = WechatScrawler()
+        with WechatScrawler() as scrawler:
+            new_articles = scrawler.walk()
         return new_articles
 
     @get('/count_new_wechat')
     async def count_wechat_articles(self):
-        scrawler = WechatScrawler()
-        counts = scrawler.count()
-        scrawler.close()
+        # scrawler = WechatScrawler()
+        with WechatScrawler() as scrawler:
+            counts = scrawler.count()
         return counts
 
     # ----------------------------

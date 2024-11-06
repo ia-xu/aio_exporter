@@ -46,3 +46,11 @@ class BaseScrawler:
 
     def close(self):
         return self.driver.close()
+
+    def __enter__(self):
+        # Return the instance itself so it can be used in the `with` block
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Close the driver when exiting the context
+        self.close()
