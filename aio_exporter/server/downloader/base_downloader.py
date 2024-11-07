@@ -3,6 +3,11 @@ from aio_exporter.utils import sql_utils
 import re
 from mmengine import Config
 from aio_exporter.utils import get_work_dir
+import shutil
+
+work_dir = get_work_dir()
+database = work_dir / 'database' / 'download'
+database.mkdir(exist_ok=True)
 
 class BaseDownloader:
     def __init__(self, source_name):
@@ -41,7 +46,7 @@ class BaseDownloader:
         # 最多保存60个字,避免超长文件
         if len(cleaned_title) > 50:
             cleaned_title = cleaned_title[:20] + '...' + cleaned_title[-20:]
-        cleaned_title = cleaned_title
+        cleaned_title = cleaned_title.replace(' ','')
         return cleaned_title
 
     def check_file_path_exists(self, file_path):
@@ -61,3 +66,12 @@ class BaseDownloader:
             self.session,
             ids
         )
+
+    def clean_download(self, ):
+        # 用于调试结果,清理所有已经下载的内容
+        sql_utils.clear_article_storage(self.session)
+        download_dir = work_dir / 'database' / 'download'
+        shutil.rmtree(download_dir)
+        download_dir.mkdir(exist_ok=True)
+        source_dir = database / self.source_name
+        source_dir.mkdir(exist_ok=True)

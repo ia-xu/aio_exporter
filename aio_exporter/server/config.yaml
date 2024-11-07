@@ -53,4 +53,11 @@ downloader:
     # 单次做多下载文章数量
     max_download_size : 120
     # 单次最多额外创建 200 条任务
-    max_asssign_count: 200
+    max_assign_count: 200
+  bilibili:
+    # 下载队列当中的文件数量
+    max_assign_count: 200
+    # 单次最多下载视频数量
+    max_download_size: 100
+    # 同时下载的视频数量
+    batch_size : 4

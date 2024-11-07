@@ -29,7 +29,7 @@ class WechatDownloader(BaseDownloader):
         super().__init__('wechat')
         self.batch_size = 5
         # 单次最多更新的数量
-        self.max_asssign_count = self.config.max_asssign_count
+        self.max_assign_count = self.config.max_assign_count
         self.max_download_size = self.config.max_download_size
 
         # 用于加载一些需要javascript渲染的网页
@@ -48,7 +48,7 @@ class WechatDownloader(BaseDownloader):
             if article.url == 'https://none':
                 continue
             count += 1
-            if count > self.max_asssign_count:
+            if count > self.max_assign_count:
                 return locations
             # 分配存储路径,添加到库,将 状态变化为 '尚未开始'
             file_path = self.insert_and_assign_path(article)
@@ -88,14 +88,7 @@ class WechatDownloader(BaseDownloader):
         )
         return file_path
 
-    def clean_download(self):
-        # 用于调试结果,清理所有已经下载的内容
-        sql_utils.clear_article_storage(self.session)
-        download_dir = work_dir / 'database' / 'download'
-        shutil.rmtree(download_dir)
-        download_dir.mkdir(exist_ok=True)
-        wechat_dir = database / 'wechat'
-        wechat_dir.mkdir(exist_ok=True)
+
 
     async def post_process_html(self, url , result, new_article = True):
         # 如果 new article == False , 表明现在处理的都是一些用 requests 处理失败的文章
@@ -237,7 +230,6 @@ class WechatDownloader(BaseDownloader):
         status = []
         for i in range(0, len(article_with_file_path), self.batch_size):
             batch = article_with_file_path[i:i + self.batch_size]
-            batch = batch[batch['author'] != '人人都能懂的AIGC']
             if not len(batch):
                 continue
             download_count += len(batch)

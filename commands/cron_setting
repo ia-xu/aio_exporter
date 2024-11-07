@@ -1,3 +1,3 @@
-*/20 * * * * PYTHONPATH=/mnt/d/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /mnt/d/root/projects/aio_exporter/commands/scrawler_cron_job.py --source wechat
-18,53 * * * * PYTHONPATH=/mnt/d/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /mnt/d/root/projects/aio_exporter/commands/scrawler_cron_job.py --source bilibili
+*/50 * * * * PYTHONPATH=/mnt/d/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /mnt/d/root/projects/aio_exporter/commands/scrawler_cron_job.py --source wechat
+*/20 * * * * PYTHONPATH=/mnt/d/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /mnt/d/root/projects/aio_exporter/commands/scrawler_cron_job.py --source bilibili
 */15 * * * * PYTHONPATH=/mnt/d/root/projects/aio_exporter /root/miniconda3/envs/scrawl/bin/python /mnt/d/root/projects/aio_exporter/commands/download_cron_job.py

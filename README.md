@@ -33,8 +33,10 @@
     pip3 install 
     - pip install --pre yutto -i https://pypi.tuna.tsinghua.edu.cn/simple
     ffmpeg
-    - wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz
-    - tar -xvJf ffmpeg-release-arm64-static.tar.xz
+    - apt install ffmpeg
+    or 
+    - wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-<version>-static.tar.xz
+    - tar -xvJf ffmpeg-release-<version>-static.tar.xz
     - cd ffmpeg-<version>-static/
     - sudo cp ffmpeg /usr/local/bin/
     - sudo cp ffprobe /usr/local/bin/
