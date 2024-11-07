@@ -39,7 +39,13 @@ class BilibiliScrawler(BaseScrawler):
 
     def login_status(self):
         self.driver.get('https://space.bilibili.com/405067166')
-        self.load_cookie()
+        # 必须先验证登录通过
+        try:
+            self.load_cookie()
+        except:
+            logger.info('登录过期!')
+            return False
+
         time.sleep(1)
         self.driver.get('https://space.bilibili.com/405067166')
         try:
@@ -99,10 +105,12 @@ class BilibiliScrawler(BaseScrawler):
         action.click(ele).perform()
 
     def walk_through_article(self, up_name , uid, max_count = 200):
-
         # 必须先验证登录通过
-        self.load_cookie()
-
+        try:
+            self.load_cookie()
+        except:
+            logger.info('登录过期或其他异常,请稍后再试!')
+            return []
         # 计算当前需要下载的内容数量
         logger.info(f'账号 {up_name} 最多搜集 {max_count} 个视频')
         count = self.video_num(uid)
@@ -126,6 +134,9 @@ class BilibiliScrawler(BaseScrawler):
 
         # 一共要获取 max_count ， 不断翻页，直到全部获取
         new_updates = self.gather_video_on_page()
+        if not new_updates:
+            logger.info('请稍后再试!~')
+            return []
         # 获取当前浏览器能够放多少页
         num_in_on_page = len(new_updates)
         # 计算一共需要获取多少页
@@ -142,7 +153,11 @@ class BilibiliScrawler(BaseScrawler):
                 break
 
             time.sleep(2 + random.random() * 3)
-            updates += self.gather_video_on_page()
+            new_videos = self.gather_video_on_page()
+            if len(new_videos) == 0 :
+                logger.info('请稍后再试')
+                break
+            updates += new_videos
             if len(updates) > max_count:
                 # 不要一次性翻页太多
                 logger.info('翻页结束')
@@ -184,27 +199,31 @@ class BilibiliScrawler(BaseScrawler):
 
 
     def gather_video_on_page(self):
-        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-        current_page_update = []
+        try:
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            current_page_update = []
 
-        for li in soup.find(id='submit-video-list').find(class_='clearfix cube-list').find_all('li'):
-            link = li.find('a', class_='title')
-            if link is None:
-                continue
-            link_url = link.get('href')
-            link_title = link.get('title')
-            meta = li.find(class_='meta').find('span', class_='time').text.strip()
-            if link_url.startswith('//www.bilibili.com'):
-                link_url = 'https:' + link_url
-            current_page_update.append(
-                {
-                    'link': link_url,
-                    'title': link_title,
-                    'update_time': html_utils.parse_bilibili_time(meta)
-                }
-            )
-        return current_page_update
-
+            video_list = soup.find(id='submit-video-list')
+            cube = video_list.find(class_='clearfix cube-list')
+            for li in cube.find_all('li'):
+                link = li.find('a', class_='title')
+                if link is None:
+                    continue
+                link_url = link.get('href')
+                link_title = link.get('title')
+                meta = li.find(class_='meta').find('span', class_='time').text.strip()
+                if link_url.startswith('//www.bilibili.com'):
+                    link_url = 'https:' + link_url
+                current_page_update.append(
+                    {
+                        'link': link_url,
+                        'title': link_title,
+                        'update_time': html_utils.parse_bilibili_time(meta)
+                    }
+                )
+            return current_page_update
+        except:
+            return []
 
 
 

@@ -46,7 +46,8 @@ scrawler:
         id: 295438644
       - name: 寿训笔记
         id: 505753530
-    max_count: 300
+    # 每次稍微搞一点，否则会被反爬虫
+    max_count: 120
 
 downloader:
   wechat:

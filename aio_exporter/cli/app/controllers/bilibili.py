@@ -70,5 +70,5 @@ class BilibiliController(Controller):
         # async def download_task():
         #     await downloader.download()
         # asyncio.create_task(download_task())
-        await downloader.download()
-        return new_task
+        status = await downloader.download()
+        return status
