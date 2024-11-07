@@ -56,8 +56,8 @@ downloader:
     max_assign_count: 200
   bilibili:
     # 下载队列当中的文件数量
-    max_assign_count: 200
+    max_assign_count: 60
     # 单次最多下载视频数量
-    max_download_size: 100
+    max_download_size: 60
     # 同时下载的视频数量
     batch_size : 4

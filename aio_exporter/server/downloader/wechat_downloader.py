@@ -208,9 +208,6 @@ class WechatDownloader(BaseDownloader):
         except:
             return None
 
-    def get_no_download_in_task_list(self):
-        ids_need_download = self.gather_ids_with_status('尚未开始')
-        return len(ids_need_download)
 
 
     async def download(self, new_article = True):

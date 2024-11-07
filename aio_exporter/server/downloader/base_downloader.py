@@ -16,7 +16,9 @@ class BaseDownloader:
         config_file = get_work_dir() / 'aio_exporter' / 'server' / 'config.yaml'
         self.config = Config.fromfile(config_file).downloader[self.source_name]
 
-
+    def get_no_download_in_task_list(self):
+        ids_need_download = self.gather_ids_with_status('尚未开始')
+        return len(ids_need_download)
 
     def gather_no_download_ids(self):
         return sql_utils.get_ids_not_in_article_storage(self.session)
@@ -71,7 +73,8 @@ class BaseDownloader:
         # 用于调试结果,清理所有已经下载的内容
         sql_utils.clear_article_storage(self.session)
         download_dir = work_dir / 'database' / 'download'
-        shutil.rmtree(download_dir)
         download_dir.mkdir(exist_ok=True)
         source_dir = database / self.source_name
+        # clean 只对自己的source_name进行清理
+        shutil.rmtree(download_dir)
         source_dir.mkdir(exist_ok=True)

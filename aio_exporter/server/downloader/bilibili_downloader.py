@@ -33,6 +33,7 @@ class BiliBiliDownloader(BaseDownloader):
             if 'SESSDATA' in cookie['name']:
                 self.sessdata = cookie['value']
 
+
     def assign_path_for_new_video(self):
         # 对于up新更新的视频，加入到下载队列当中
         ids = self.gather_no_download_ids()
@@ -83,15 +84,25 @@ class BiliBiliDownloader(BaseDownloader):
         )
         return file_path
 
-    async def download(self, new_article = True):
+    def create_new_download_task(self , new_article = True):
+        # 抽取一部分任务，将这些任务的状态更新为正在下载
         status = '尚未开始'
         if not new_article:
             status = '下载失败'
         ids_need_download = self.gather_ids_with_status(status)
         # 获取文件的下载路径
         article_with_file_path = self.gather_article_with_storage(ids_need_download)
-
         article_with_file_path = article_with_file_path.sample(frac=1).reset_index(drop=True)
+        article_with_file_path = article_with_file_path.iloc[:self.max_download_size]
+        for _ , row in article_with_file_path.iterrows():
+            self.upsert_status(row.id , '正在下载')
+        return article_with_file_path['title'].tolist()
+
+    async def download(self):
+        ids_need_download = self.gather_ids_with_status('正在下载')
+        logger.info(f'找到需要下载的视频数量: {len(ids_need_download)}')
+        # 获取文件的下载路径
+        article_with_file_path = self.gather_article_with_storage(ids_need_download)
         download_count = 0
         status = []
         for i in range(0, len(article_with_file_path), self.batch_size):
@@ -105,10 +116,6 @@ class BiliBiliDownloader(BaseDownloader):
             u2f = []
             for _ , row in batch.iterrows():
                 u2f.append((row.url , row.storage_path))
-
-            # 对这批数据更新状态为下载中
-            for video_id in batch['id']:
-                self.upsert_status(video_id, '下载中')
 
             results = await self.adownload_videos(u2f)  # 下载 HTML
             for (_, row), result in zip(batch.iterrows(), results):
@@ -130,14 +137,23 @@ class BiliBiliDownloader(BaseDownloader):
         # 叫醒 cmd, 帮我下载视频
         # (video 720p 30fps hevc > avc / audio 128kbps aac)
         path = Path(path)
+
+
         if not path.exists():
             path.mkdir()
+
+        if path.exists() and len([file for file in path.glob('*.mp4')]) > 0 :
+            return '下载成功'
+
         conda_path = '/root/miniconda3/bin/conda'
         command = f"{conda_path} run -n {self.env_name} yutto {url} -d {path} -q 64 -aq 30232 --download-vcodec-priority hevc,avc,av1 -c '{self.sessdata}'"
         try:
-            subprocess.run(command, shell=False, check=True)
+            subprocess.run(command, shell=True, check=True)
             return '下载成功'
-        except subprocess.CalledProcessError as e:
+        except:
+            # import traceback
+            # traceback.print_exc()
+            # import ipdb;ipdb.set_trace()
             return '下载失败'
 
 
@@ -145,5 +161,5 @@ if __name__ == '__main__':
     bilibili_downloader = BiliBiliDownloader()
     bilibili_downloader.clean_download()
     bilibili_downloader.assign_path_for_new_video()
-
-    asyncio.run(bilibili_downloader.download())
+    # bilibili_downloader.create_new_download_task()
+    # asyncio.run(bilibili_downloader.download())

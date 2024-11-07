@@ -6,3 +6,4 @@ __pycache__/
 
 download_cron_log.txt
 scrawler_cron_log.txt
+.env

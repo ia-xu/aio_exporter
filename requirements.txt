@@ -20,3 +20,4 @@ streamlit
 requests_html
 pydub
 moviepy
+python-dotenv
