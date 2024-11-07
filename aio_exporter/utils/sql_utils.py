@@ -122,7 +122,7 @@ def get_ids_by_author(session, author, source=None):
     return [row.id for row in query.all()]
 
 
-def get_articles_by_ids(session, article_ids : List = None):
+def get_articles_by_ids(session, article_ids : List = None, to_pd = True):
     """
     Retrieve articles based on a list of article IDs and return the results as a pandas DataFrame.
 
@@ -149,11 +149,11 @@ def get_articles_by_ids(session, article_ids : List = None):
         }
         for article in articles
     ]
+    if to_pd:
+        # Convert the list of dictionaries to a pandas DataFrame
+        articles_dict_list = pd.DataFrame(articles_dict_list)
 
-    # Convert the list of dictionaries to a pandas DataFrame
-    df = pd.DataFrame(articles_dict_list)
-
-    return df
+    return articles_dict_list
 
 
 
