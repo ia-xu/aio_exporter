@@ -45,3 +45,12 @@ if __name__ == '__main__':
     with open(cookie_dir / 'cookies.json' , 'w' , encoding='utf-8') as f:
         json.dump(login , f , ensure_ascii=False , indent=4)
 
+
+    # post 到远端
+    url = 'http://a4807e0.r20.cpolar.top'
+    status = requests.post(
+        urljoin(url , 'api/bilibili/login') ,
+        json = login
+    )
+    # 检查远端状态是否更新
+    print(status.content)

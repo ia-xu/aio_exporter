@@ -26,7 +26,9 @@ class BilibiliController(Controller):
         with open(cookie_dir / 'cookies.json' , 'w' , encoding='utf-8') as f:
             json.dump(login , f , ensure_ascii=False , indent=4)
 
-        return True
+        with BilibiliScrawler() as scrawler:
+            status = scrawler.login_status()
+        return status
 
     @get("/get_new_video")
     async def update_wechat_articles(self):

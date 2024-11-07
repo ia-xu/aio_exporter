@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from loguru import logger
 from selenium.webdriver.common.action_chains import ActionChains
 
-from aio_exporter.utils import get_work_dir, load_driver, get_headers, load_cookies
+from aio_exporter.utils import get_work_dir, load_driver2, get_headers, load_cookies
 from bs4 import BeautifulSoup
 from aio_exporter.utils.struct import Login
 from aio_exporter.utils import html_utils
@@ -28,12 +28,31 @@ class BilibiliScrawler(BaseScrawler):
         # load cookie
         # logger.info('load cookie')
         # self.driver.get('https://space.bilibili.com/405067166')
-        # cookies = load_cookies("bilibili")
-        # login = Login(**cookies)
-        # for cookie in login.cookies:
-        #     self.driver.add_cookie(cookie)
-        # self.driver.get('https://space.bilibili.com/405067167')
         # logger.info('create cookie done')
+
+    def load_cookie(self):
+        cookies = load_cookies("bilibili")
+        login = Login(**cookies)
+        for cookie in login.cookies:
+            self.driver.add_cookie(cookie)
+
+
+    def login_status(self):
+        self.driver.get('https://space.bilibili.com/405067166')
+        self.load_cookie()
+        time.sleep(1)
+        self.driver.get('https://space.bilibili.com/405067166')
+        try:
+            new_updates = self.gather_video_on_page()
+            if len(new_updates) > 0:
+                return True
+        except:
+            pass
+        return False
+
+
+
+
     def walk(self):
         stats = self.count()
 
@@ -80,9 +99,16 @@ class BilibiliScrawler(BaseScrawler):
         action.click(ele).perform()
 
     def walk_through_article(self, up_name , uid, max_count = 200):
+
+        # 必须先验证登录通过
+        self.load_cookie()
+
         # 计算当前需要下载的内容数量
         logger.info(f'账号 {up_name} 最多搜集 {max_count} 个视频')
         count = self.video_num(uid)
+        if count == -1:
+            logger.info(f'获取 {up_name} 视频数量失败')
+            return []
         count_article_by_author = self.count_by_author(uid)
         need_update_count = count - count_article_by_author
 
@@ -95,7 +121,7 @@ class BilibiliScrawler(BaseScrawler):
         if '扫描二维码登录' in soup.text:
             # 找到 叉叉，给他点掉
             # 说明 ip 暂时被封住了，暂时不调用
-            logger.info('访问次数过多,请稍后再试')
+            logger.info('登录过期,请重新登录且稍后再试')
             return []
 
         # 一共要获取 max_count ， 不断翻页，直到全部获取
@@ -168,6 +194,8 @@ class BilibiliScrawler(BaseScrawler):
             link_url = link.get('href')
             link_title = link.get('title')
             meta = li.find(class_='meta').find('span', class_='time').text.strip()
+            if link_url.startswith('//www.bilibili.com'):
+                link_url = 'https:' + link_url
             current_page_update.append(
                 {
                     'link': link_url,
@@ -187,18 +215,20 @@ class BilibiliScrawler(BaseScrawler):
         return mapping[uid]
 
     def video_num(self, uid):
-        url = f"https://space.bilibili.com/{uid}/video"
-        self.driver.get(url)
-        time.sleep(3 + random.random() * 3)
-
-        if 'upload' in self.driver.current_url :
-            e = self.driver.find_element(By.CLASS_NAME , 'upload-sidenav')
-            count = int(e.text.split('\n')[1])
-        else:
-            e = self.driver.find_element(By.CLASS_NAME, 'contribution-list-container')
-            count = e.find_elements(By.CLASS_NAME, 'num')[0].text
-            count = int(count)
-        return count
+        try:
+            url = f"https://space.bilibili.com/{uid}/video"
+            self.driver.get(url)
+            time.sleep(3 + random.random() * 3)
+            if 'upload' in self.driver.current_url :
+                e = self.driver.find_element(By.CLASS_NAME , 'upload-sidenav')
+                count = int(e.text.split('\n')[1])
+            else:
+                e = self.driver.find_element(By.CLASS_NAME, 'contribution-list-container')
+                count = e.find_elements(By.CLASS_NAME, 'num')[0].text
+                count = int(count)
+            return count
+        except:
+            return -1
 
 
     def count(self):
@@ -215,6 +245,9 @@ class BilibiliScrawler(BaseScrawler):
             up_name = data["name"]
             uid = data["id"]
             count = self.video_num(uid)
+            if count == -1:
+                logger.info(f'获取 {up_name} 视频数量失败!')
+                continue
             logger.info(f'找到 up {up_name} 的更新数量为 {count}')
             exists_count = self.count_by_author(uid)
             stats[uid] = count - exists_count

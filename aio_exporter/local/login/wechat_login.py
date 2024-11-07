@@ -58,7 +58,7 @@ if __name__ == '__main__':
     #     json.dump(login , f , ensure_ascii=False , indent=4)
 
     # post 到远端
-    url = 'http://127.0.0.1:31006'
+    url = 'http://a4807e0.r20.cpolar.top'
     status = requests.post(
         urljoin(url , 'api/wechat/login') ,
         json = login
