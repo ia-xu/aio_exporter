@@ -151,7 +151,7 @@ class WechatController(Controller):
         if storage:
             storage = storage.first()
         storage_path = storage.storage_path
-
+        logger.info(storage_path)
         md_text = WechatParser().parse(storage_path)
         return {
             'message': '查询成功',

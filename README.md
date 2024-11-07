@@ -3,23 +3,23 @@
     - wechat
     - [TODO] bilibili
 
+## aio_exporter
 
-## cli
-    - 负责利用 selenimn 扫码登录,创建cookie
-    - 利用 server 端提供的 post 服务,将 cookie 和其他各种信息推送到 服务端
+    ## cli
+        - 提供爬虫服务的各种接口,包括获取更新的url,下载等功能
 
-## server
-    - 1. 接受 client 端推送的 cookie 和 其他信息
-    - 2. 利用 cookie 和 其他信息, 通过定时任务调用各种接口获取数据
-    
-    - scrawler
-        - 获取所有希望爬取的网页的 url
-    - downloader
-        - 对各种网页,进行下载
 
+    ## server
+        - scrawler
+            - 获取所有希望爬取的网页的 url
+        - downloader
+            - 对各种网页,进行下载
+
+## commands:
+    - 执行定时任务的脚本
 
 ## local
-    - 负责各种工具的 cookie的重新生成 
+    - 负责各种工具的 cookie的重新生成和推送到远端服务器
 
 
 ## linux chrome driver download 
@@ -28,3 +28,15 @@
 
 ## pip source 
     - https://pypi.tuna.tsinghua.edu.cn/simple
+
+## yutto
+    pip3 install 
+    - pip install --pre yutto -i https://pypi.tuna.tsinghua.edu.cn/simple
+    ffmpeg
+    - wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz
+    - tar -xvJf ffmpeg-release-arm64-static.tar.xz
+    - cd ffmpeg-<version>-static/
+    - sudo cp ffmpeg /usr/local/bin/
+    - sudo cp ffprobe /usr/local/bin/
+    - sudo chmod +x /usr/local/bin/ffmpeg
+    - sudo chmod +x /usr/local/bin/ffprobe

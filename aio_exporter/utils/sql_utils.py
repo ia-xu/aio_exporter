@@ -1,6 +1,8 @@
+import shutil
 from typing import List
 from sqlalchemy import select
 from sqlalchemy import func
+from pathlib import Path
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
 from .utils import get_work_dir
@@ -402,3 +404,28 @@ def get_storage(session):
         })
 
     return result
+
+def move_data(session , old_prefix, new_prefix):
+    try:
+        articles_to_update = session.query(ArticleStorage).filter(
+            ArticleStorage.storage_path.startswith(old_prefix)).all()
+
+        # 更新路径
+        for article in articles_to_update:
+            if new_prefix in article.storage_path:
+                continue
+            if article.status == '下载成功':
+                new_path = article.storage_path.replace(old_prefix, new_prefix)
+                if not Path(new_path).exists() and Path(article.storage_path).exists():
+                    logger.info('copy path new new~')
+                    shutil.copy(article.storage_path , new_path)
+                    print(new_path, Path(article.storage_path).exists())
+
+            article.storage_path = article.storage_path.replace(old_prefix, new_prefix)
+            assert '/mnt/d/mnt/d' not in article.storage_path
+        # 批量提交更新
+        session.commit()
+        print("路径更新成功")
+    except Exception as e:
+        session.rollback()
+        print(f"更新失败: {e}")

@@ -278,6 +278,17 @@ class WechatDownloader(BaseDownloader):
                     status.append({'title':row.title ,'status':'下载成功'})
         return status
 
+    def move_data(self ,  old_prefix = '/root/projects/aio_exporter', new_prefix =  '/mnt/d/root/projects/aio_exporter'):
+        # 迁移数据库时需要调用这个函数
+        sql_utils.move_data(
+            self.session , old_prefix , new_prefix
+        )
+        #
+        # articles_to_update = self.session.query(sql_utils.ArticleStorage).all()
+        # for article in articles_to_update:
+        #     print(article.storage_path)
+
+
 if __name__ == '__main__':
     wechat_downloader = WechatDownloader()
     # reset
@@ -285,7 +296,8 @@ if __name__ == '__main__':
     # wechat_downloader.clean_download()
     # download
     # wechat_downloader.assign_path_for_new_articles()
-    asyncio.run(wechat_downloader.download(new_article=False))
+    # asyncio.run(wechat_downloader.download(new_article=False))
+    # wechat_downloader.move_data()
 
 
 

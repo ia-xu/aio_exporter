@@ -18,3 +18,5 @@ requests
 tqdm
 streamlit
 requests_html
+pydub
+moviepy
