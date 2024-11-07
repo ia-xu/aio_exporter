@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
 
     # post 到远端
-    url = 'http://a4807e0.r20.cpolar.top'
+    url = 'http://127.0.0.1:31006'
     status = requests.post(
         urljoin(url , 'api/bilibili/login') ,
         json = login
