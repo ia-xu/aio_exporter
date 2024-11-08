@@ -16,9 +16,17 @@ for source in ['wechat','bilibili']:
 
     for article in articles:
         # 如果 status 为 '下载成功' 且 storage_path 不存在，将 status 变为 '尚未开始'
-        if article.status == '下载成功' and not os.path.exists(article.storage_path):
-            logger.warning(f"Storage path does not exist for article ID {article.id}. Changing status to '尚未开始'.")
-            article.status = '尚未开始'
+        if article.status == '下载成功':
+            if not os.path.exists(article.storage_path):
+                logger.warning(f"Storage path does not exist for article ID {article.id}. Changing status to '尚未开始'.")
+                article.status = '尚未开始'
+            elif source == 'bilibili':
+                mp4_files = list(Path(article.storage_path).glob('*.mp4'))
+                if len(mp4_files) == 0 :
+                    logger.warning(
+                        f"Video does not exist for article ID {article.id}. Changing status to '尚未开始'.")
+                    article.status = '尚未开始'
+                    shutil.rmtree(article.storage_path)
 
         # 如果 status 为 '正在下载'，将 status 变为 '尚未开始'
         elif article.status == '正在下载':
@@ -32,7 +40,6 @@ for source in ['wechat','bilibili']:
                 elif os.path.isdir(article.storage_path):
                     # 使用 shutil.rmtree 删除非空文件夹
                     import shutil
-
                     shutil.rmtree(article.storage_path)
                     logger.info(f"Deleted directory at path: {article.storage_path} for article ID {article.id}.")
 

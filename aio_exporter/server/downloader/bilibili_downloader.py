@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 from aio_exporter.server.downloader.base_downloader import BaseDownloader
 from loguru import logger
@@ -110,9 +111,9 @@ class BiliBiliDownloader(BaseDownloader):
             if not len(batch):
                 continue
             download_count += len(batch)
-            if download_count > self.max_download_size:
-                logger.info('超出单次下载限制!')
-                return status
+            # if download_count > self.max_download_size:
+            #     logger.info('超出单次下载限制!')
+            #     return status
             u2f = []
             for _ , row in batch.iterrows():
                 u2f.append((row.url , row.storage_path))
@@ -133,11 +134,15 @@ class BiliBiliDownloader(BaseDownloader):
         tasks = [self.adownload_video(url , path) for url, path in u2f]
         results = await asyncio.gather(*tasks)
         return results
+
     async def adownload_video(self, url, path):
         # 叫醒 cmd, 帮我下载视频
         # (video 720p 30fps hevc > avc / audio 128kbps aac)
         path = Path(path)
 
+        if not path.parent.exists():
+            # up 主的文件夹
+            path.parent.mkdir()
 
         if not path.exists():
             path.mkdir()

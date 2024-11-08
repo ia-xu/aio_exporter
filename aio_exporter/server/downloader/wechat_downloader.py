@@ -208,17 +208,25 @@ class WechatDownloader(BaseDownloader):
         except:
             return None
 
+    def create_new_download_task(self , new_article = True):
 
-
-    async def download(self, new_article = True):
-        # new_article:  默认只尝试下载那些还没有下载过的文章
-
-        # 关于代理，后续使用: https://blog.csdn.net/crayonjingjing/article/details/137596882
         status = '尚未开始'
         if not new_article:
             status = '下载失败'
 
         ids_need_download = self.gather_ids_with_status(status)
+        article_with_file_path = self.gather_article_with_storage(ids_need_download)
+        article_with_file_path = article_with_file_path.sample(frac=1).reset_index(drop=True)
+        article_with_file_path = article_with_file_path.iloc[:self.max_download_size]
+        for _, row in article_with_file_path.iterrows():
+            self.upsert_status(row.id, '正在下载')
+        return article_with_file_path['title'].tolist()
+
+
+    async def download(self, new_article = True):
+        # new_article:  默认只尝试下载那些还没有下载过的文章
+        # 关于代理，后续使用: https://blog.csdn.net/crayonjingjing/article/details/137596882
+        ids_need_download = self.gather_ids_with_status('正在下载')
         article_with_file_path = self.gather_article_with_storage(ids_need_download)
 
         article_with_file_path = article_with_file_path.sample(frac = 1).reset_index(drop = True)
@@ -230,9 +238,9 @@ class WechatDownloader(BaseDownloader):
             if not len(batch):
                 continue
             download_count += len(batch)
-            if download_count > self.max_download_size:
-                logger.info('超出单次下载限制!')
-                return status
+            # if download_count > self.max_download_size:
+            #     logger.info('超出单次下载限制!')
+            #     return status
             urls = batch['url'].tolist()  # 获取当前批次的 URL
             # 每次调用 asyncio 的方法，一次性获取10篇文章的 html
             post_fn = partial(self.post_process_html , new_article = new_article)

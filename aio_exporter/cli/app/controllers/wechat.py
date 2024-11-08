@@ -75,6 +75,12 @@ class WechatController(Controller):
         with WechatDownloader() as downloader:
             return downloader.get_no_download_in_task_list()
 
+    @get('/downloading_task_num')
+    async def get_downloading_in_task_list(self) -> int:
+        with WechatDownloader() as downloader:
+            # 触发定时任务以后需要判断是否应该添加下载对象
+            return downloader.get_no_download_in_task_list(status_list=['正在下载'])
+
 
 
     @post('/assign_download_path')
@@ -85,6 +91,8 @@ class WechatController(Controller):
     @post('/download')
     async def download_articles(self , new_article : bool):
         with WechatDownloader() as downloader:
+            # 将一部分任务变成下载中
+            downloader.create_new_download_task(new_article)
             result = await downloader.download(new_article)
         return result
 

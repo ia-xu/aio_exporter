@@ -57,6 +57,11 @@ class BilibiliController(Controller):
             # 触发定时任务以后需要判断是否应该添加下载对象
             return downloader.get_no_download_in_task_list(status_list=['尚未开始','正在下载'])
 
+    @get('/downloading_task_num')
+    async def get_downloading_in_task_list(self) -> int:
+        with BiliBiliDownloader() as downloader:
+            # 触发定时任务以后需要判断是否应该添加下载对象
+            return downloader.get_no_download_in_task_list(status_list=['正在下载'])
 
     @post('/assign_download_path')
     async def assign_download_path(self):

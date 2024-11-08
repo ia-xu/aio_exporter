@@ -30,6 +30,16 @@ def download_wechat():
     else:
         log('继续执行尚未完成的下载任务!')
 
+    response = requests.get(
+        'http://localhost:31006/api/wechat/downloading_task_num'
+    )
+    count = response.json()
+    if count != 0:
+        log(f'还有{count}个正在下载的上一个任务')
+        return
+
+    log(f'执行新的下载任务')
+
     # 尝试所有 download count = 0 的内容
     response = requests.post(
         'http://localhost:31006/api/wechat/download?new_article=true' ,
@@ -47,6 +57,16 @@ def download_wechat():
             fail += 1
     log(f'一共下载了 {success + fail} 篇新文章!, 成功 {success} /失败 {fail} / 失效 {delete}')
 
+
+    response = requests.get(
+        'http://localhost:31006/api/wechat/downloading_task_num'
+    )
+    count = response.json()
+    if count != 0:
+        log(f'还有{count}个正在下载的上一个任务')
+        return
+
+    log(f'执行新的下载任务')
 
 
     # 如果存在 download count != 0 的内容,进行重试
@@ -80,6 +100,15 @@ def download_bilibili():
     else:
         log('继续执行尚未完成的下载任务!')
 
+    response = requests.get(
+        'http://localhost:31006/api/bilibili/downloading_task_num'
+    )
+    count = response.json()
+    if count != 0:
+        log(f'还有{count}个正在下载的上一个任务')
+        return
+    log(f'执行新的下载任务')
+
     # 尝试所有 download count = 0 的内容
     response = requests.post(
         'http://localhost:31006/api/bilibili/download?new_article=true' ,
@@ -94,6 +123,14 @@ def download_bilibili():
             fail += 1
     log(f'一共下载了 {success + fail} 篇新文章!, 成功 {success} /失败 {fail}')
 
+    response = requests.get(
+        'http://localhost:31006/api/bilibili/downloading_task_num'
+    )
+    count = response.json()
+    if count != 0:
+        log(f'还有{count}个正在下载的上一个任务')
+        return
+    log(f'执行新的下载任务')
 
     # 如果存在 download count != 0 的内容,进行重试
     response = requests.post(
