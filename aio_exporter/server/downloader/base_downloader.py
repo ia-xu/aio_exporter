@@ -16,9 +16,12 @@ class BaseDownloader:
         config_file = get_work_dir() / 'aio_exporter' / 'server' / 'config.yaml'
         self.config = Config.fromfile(config_file).downloader[self.source_name]
 
-    def get_no_download_in_task_list(self):
-        ids_need_download = self.gather_ids_with_status('尚未开始')
-        return len(ids_need_download)
+    def get_no_download_in_task_list(self, status_list = ['尚未开始']):
+        ids = []
+        for status in status_list:
+            ids_need_download = self.gather_ids_with_status(status)
+            ids.extend(ids_need_download)
+        return len(ids)
 
     def gather_no_download_ids(self):
         return sql_utils.get_ids_not_in_article_storage(self.session)
@@ -78,3 +81,15 @@ class BaseDownloader:
         # clean 只对自己的source_name进行清理
         shutil.rmtree(download_dir)
         source_dir.mkdir(exist_ok=True)
+
+    def close(self):
+        self.session.close()
+        return
+
+    def __enter__(self):
+        # Return the instance itself so it can be used in the `with` block
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Close the driver when exiting the context
+        self.close()

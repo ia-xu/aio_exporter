@@ -110,4 +110,5 @@ def download():
                     md_text = html_utils.markdown_insert_images(md_text)
                     st.markdown(md_text,unsafe_allow_html=True)
 
+            session.close()
 download()

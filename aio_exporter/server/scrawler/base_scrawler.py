@@ -46,7 +46,9 @@ class BaseScrawler:
         )
 
     def close(self):
-        return self.driver.close()
+        self.driver.close()
+        self.session.close()
+        return
 
     def __enter__(self):
         # Return the instance itself so it can be used in the `with` block

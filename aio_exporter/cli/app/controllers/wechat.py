@@ -72,20 +72,20 @@ class WechatController(Controller):
     # ----------------------------
     @get('/task_num')
     async def get_no_download_in_task_list(self) -> int:
-        downloader = WechatDownloader()
-        return downloader.get_no_download_in_task_list()
+        with WechatDownloader() as downloader:
+            return downloader.get_no_download_in_task_list()
 
 
 
     @post('/assign_download_path')
     async def assign_download_path(self):
-        downloader = WechatDownloader()
-        return downloader.assign_path_for_new_articles()
+        with WechatDownloader() as downloader:
+            return downloader.assign_path_for_new_articles()
 
     @post('/download')
     async def download_articles(self , new_article : bool):
-        downloader = WechatDownloader()
-        result = await downloader.download(new_article)
+        with WechatDownloader() as downloader:
+            result = await downloader.download(new_article)
         return result
 
     @get('/article_list')
@@ -115,6 +115,8 @@ class WechatController(Controller):
         if sample > 0 :
             random.shuffle(all_data)
             all_data = all_data[:sample]
+
+        session.close()
 
         return {
             'message': '查询成功',

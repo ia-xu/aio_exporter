@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 import pandas as pd
 
 
-url = 'http://a4807e0.r20.cpolar.top'
+url = 'http://localhost:31006'
 status = requests.get(
     urljoin(url , 'api/wechat/article_list?author=蓝鲸课堂') ,
 )

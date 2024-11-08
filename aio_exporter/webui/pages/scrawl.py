@@ -47,7 +47,7 @@ def scrawl_stats():
             df = df.sample(num  , replace = False)
 
             st.data_editor(df.loc[:,['author','issue_date','title','url']], height = 400, key = f'{source}-df')
-
+        session.close()
 
     log_files = work_dir / 'commands' / 'scrawler_cron_log.txt'
     log = ""
