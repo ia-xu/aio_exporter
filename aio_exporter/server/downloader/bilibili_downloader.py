@@ -92,6 +92,8 @@ class BiliBiliDownloader(BaseDownloader):
             status = '下载失败'
         ids_need_download = self.gather_ids_with_status(status)
         # 获取文件的下载路径
+        if not ids_need_download:
+            return []
         article_with_file_path = self.gather_article_with_storage(ids_need_download)
         article_with_file_path = article_with_file_path.sample(frac=1).reset_index(drop=True)
         article_with_file_path = article_with_file_path.iloc[:self.max_download_size]
