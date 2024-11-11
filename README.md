@@ -79,12 +79,11 @@
             - 获取所有希望爬取的网页的 url
         - downloader
             - 对各种网页,进行下载
-
-    ## commands:
+    ## local
+            - 负责各种源的 cookie 的重新生成和推送到远端服务器
+## commands:
         - 执行定时任务的脚本
 
-    ## local
-        - 负责各种源的 cookie 的重新生成和推送到远端服务器
 
 
 # installation tips 

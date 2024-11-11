@@ -7,3 +7,6 @@ __pycache__/
 download_cron_log.txt
 scrawler_cron_log.txt
 .env
+
+# 一些自用的导出数据的脚本
+export/
