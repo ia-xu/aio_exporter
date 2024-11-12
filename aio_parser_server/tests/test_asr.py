@@ -1,8 +1,9 @@
 import requests
+from pathlib import Path
 
 url = "http://localhost:56006/api/asr/transcribe"
 
-mp3_file = 'd:\\test_audio.mp3'
+mp3_file = Path(__file__).parent / 'test_audio.mp3'
 # Open the file in binary mode
 token = 'aaa'
 
@@ -13,9 +14,7 @@ with open(mp3_file, "rb") as audio_file:
     }
     data = {
         "model": "FunAudioLLM/SenseVoiceSmall"
-    }
-    headers = {
-        "Authorization": f"Bearer {token}",
+        # "model": "Whisper-Large"
     }
 
     # Send the request

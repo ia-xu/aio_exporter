@@ -1,0 +1,10 @@
+transformers
+opencc
+pydub
+funasr
+loguru
+torchaudio
+torch
+numpy
+loguru
+mmengine

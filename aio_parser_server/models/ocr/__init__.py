@@ -1,0 +1,1 @@
+from .torchocr.ocr import TorchOCRModel
