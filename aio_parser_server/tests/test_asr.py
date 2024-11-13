@@ -18,5 +18,5 @@ with open(mp3_file, "rb") as audio_file:
     }
 
     # Send the request
-    response = requests.post(url, headers=headers, data=data, files=files)
+    response = requests.post(url, data=data, files=files)
     print(response.json())

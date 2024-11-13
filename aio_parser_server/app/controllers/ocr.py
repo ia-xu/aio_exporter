@@ -33,7 +33,7 @@ class OCRController(Controller):
             if OCR_MODELS['torchocr'] is None:
                 model = TorchOCRModel()
                 OCR_MODELS['torchocr'] = model
-        elif model_name == 'gotocr':
+        elif 'gotocr' in model_name:
             if OCR_MODELS['gotocr'] is None:
                 model = GOTModel()
                 OCR_MODELS['gotocr'] = model
@@ -49,6 +49,6 @@ class OCRController(Controller):
         with tempfile.NamedTemporaryFile(suffix=suffix) as tmp_file:
             tmp_file.write(data)
             tmp_file.flush()
-            ocr_result = model.ocr(tmp_file.name)
+            ocr_result = model.ocr(tmp_file.name , model_name)
 
         return ocr_result

@@ -16,8 +16,8 @@ class GOTFormatter:
         self.tokenizer = tokenizer
         self.use_im_start_end = True
         self.image_token_len = 256
-        self.format = 'OCR with format: '
-    def eval_format(self , conversations , images_list):
+
+    def eval_format(self , conversations , images_list , format):
 
 
         for conversation , images , in zip(conversations , images_list):
@@ -25,7 +25,7 @@ class GOTFormatter:
             # 这里就简单处理一下
 
             # qs = 'OCR with format: '
-            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * self.image_token_len + DEFAULT_IM_END_TOKEN + '\n' + self.format
+            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_PATCH_TOKEN * self.image_token_len + DEFAULT_IM_END_TOKEN + '\n' + format
 
             conv = conv_templates['mpt'].copy()
             conv.append_message(conv.roles[0], qs)

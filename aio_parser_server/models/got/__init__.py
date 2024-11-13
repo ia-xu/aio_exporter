@@ -27,7 +27,7 @@ class GOTModel:
         logger.info('load got 2.0 done...')
         self.formatter = GOTFormatter(model , tokenizer)
 
-    def ocr(self , image_path):
+    def ocr(self , image_path , model_name):
 
         conversation = [
             {
@@ -39,9 +39,17 @@ class GOTModel:
             },
         ]
         image = Image.open(image_path).convert('RGB')
+
+        if model_name.endswith('/ocr'):
+            format = 'OCR:'
+        elif model_name.endswith('/ocrf'):
+            format = 'OCR with format: '
+        else:
+            raise ValueError('model_name must end with /ocr or /ocrf')
         inputs = self.formatter.eval_format(
             [conversation],
-            [[image]]
+            [[image]],
+            format = format
         )
         out = self .formatter.generate(inputs)
 
