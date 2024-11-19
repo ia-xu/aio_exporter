@@ -58,17 +58,29 @@ def download():
             filter_df.loc[:,'storage_path_'] = filter_df.loc[:,'storage_path'].map(lambda x: Path(x).parent.name + '/' + Path(x).name)
 
             filter_df_ = filter_df.loc[:,['author','title','storage_path_']]
-            st.data_editor(filter_df_)
+            # st.data_editor(filter_df_)
 
             # 随机展示
+            # Add a slider to select the number of articles to display
+            num_articles_to_display = st.slider('Select the number of articles to display', min_value=1, max_value=len(filter_df_), value=50, step=1)
+
+            # Select a random subset of articles based on the slider value
+            selected_articles = filter_df_.sample(n=num_articles_to_display, random_state=42)
+
+            # Display the selected articles
+            st.data_editor(selected_articles)
             st.write('## 查看转换为 markdown 格式的结果')
 
             # 简单展示
-            show_im = st.checkbox('展示图片/展示转换后的 md 文件', True, key = f'{source}-checkbox')
+            show_im = st.checkbox('展示图片/展示转换后的 md 文件', True, key=f'{source}-checkbox')
 
-            select_article = st.selectbox('挑选文章', filter_df.title.to_list() , key = f'{source}-selectbox')
+            text_input = st.text_input('筛选文章标题', '', key=f'{source}-text-input')
 
-
+            if text_input:
+                filtered_titles = filter_df[filter_df.title.str.contains(text_input, case=False)].title.tolist()
+            else:
+                filtered_titles = filter_df.title.tolist()
+            select_article = st.selectbox('挑选文章', filtered_titles, key=f'{source}-selectbox')
             file_path = filter_df[filter_df.title == select_article]
 
             url = file_path['url'].values[0]
@@ -76,8 +88,6 @@ def download():
             st.divider()
 
             storage_path = file_path['storage_path'].values[0]
-
-
 
             with st.spinner('准备展示转换结果'):
 
