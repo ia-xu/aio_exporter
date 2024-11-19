@@ -21,15 +21,17 @@ parser = {
 
 
 def extract_image_links(md_text):
-    lines = md_text.splitlines()
     image_links = []
-    for line in lines:
-        # 检查是否以 ![img 开头
-        if line.startswith("![img") and "](" in line:
-            # 提取图片链接
-            start = line.index("(") + 1
-            end = line.index(")")
-            image_links.append(line[start:end])
+    # 获取一个 markdown 文档当中的所有的 ![img](url) 当中的 url
+    import re
+    pattern = r'!\[img\]\((http.*?)\)'
+    matches = re.findall(pattern, md_text)
+    for match in matches:
+        if len(match) == 1:
+            image_links.append(match)
+        else:
+            image_links.append(match.split(' ')[0])
+
     return image_links
 
 def download():
@@ -105,15 +107,14 @@ def download():
                     local_image_paths = []
                     for link in image_links:
                         response = requests.get(link)
-                        if response.status_code == 200:
-                            save_suffix = Image.open(BytesIO(response.content)).format
+                        save_suffix = Image.open(BytesIO(response.content)).format
 
-                            # 获取文件名
-                            hashcode = hashlib.md5(link.encode('utf-8')).hexdigest()
-                            local_path = os.path.join(td, hashcode  + f'.{save_suffix}')
-                            with open(local_path, 'wb') as f:
-                                f.write(response.content)
-                            local_image_paths.append(local_path)
+                        # 获取文件名
+                        hashcode = hashlib.md5(link.encode('utf-8')).hexdigest()
+                        local_path = os.path.join(td, hashcode  + f'.{save_suffix}')
+                        with open(local_path, 'wb') as f:
+                            f.write(response.content)
+                        local_image_paths.append(local_path)
                     for original_link, local_path in zip(image_links, local_image_paths):
                         md_text = md_text.replace(original_link, local_path)
 
