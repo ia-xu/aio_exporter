@@ -81,6 +81,13 @@
             - 对各种网页,进行下载
     ## local
             - 负责各种源的 cookie 的重新生成和推送到远端服务器
+
+## aio_parser_server 
+    
+    - 负责将 torchocr 能力 / whisper 能力 / got ocr 2.0 的能力包装成服务   
+    - 这样可以在一个 GPU 服务器上运行这些服务,然后如果 爬虫服务的 parser 需要使用相关的能力，可以通过接口调用的方式调用这些能力 
+    - 通过 PYTHONPATH=`pwd` python3 aio_parser_server/main.py 启动
+
 ## commands:
         - 执行定时任务的脚本
 
