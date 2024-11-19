@@ -153,7 +153,7 @@ class BiliBiliDownloader(BaseDownloader):
             return '下载成功'
 
         conda_path = '/root/miniconda3/bin/conda'
-        command = f"{conda_path} run -n {self.env_name} yutto {url} -d {path} -q 64 -aq 30232 --download-vcodec-priority hevc,avc,av1 -c '{self.sessdata}'"
+        command = f"{conda_path} run -n {self.env_name} yutto -b {url} -d {path} -q 64 -aq 30232 --download-vcodec-priority hevc,avc,av1 -c '{self.sessdata}' " + "-tp '{title}/{id}-{name}'"
         try:
             subprocess.run(command, shell=True, check=True)
             return '下载成功'
@@ -170,3 +170,4 @@ if __name__ == '__main__':
     bilibili_downloader.assign_path_for_new_video()
     # bilibili_downloader.create_new_download_task()
     # asyncio.run(bilibili_downloader.download())
+    # /root/miniconda3/bin/conda run -n scrawl yutto https://www.bilibili.com/video/BV1zkUPY6ErH/ -d ./td -q 64 -aq 30232 --download-vcodec-priority hevc,avc,av1 -c '59b8f149%2C1747458990%2C110a3%2Ab1CjCgwkrIk9Bh5JpGdjFuXyC0JE8ILNOyfsNHSTCVGiaLNo5d86Awi1K1fLLPEIP8mmQSVlROMHprandZdGtmZ1JDLUZVWVhfZWlCUExOMkVlRGhacHZLeU9XVnF5ZFVkY0xzenpVMFExY3pjRlkxRkNXaE9lbkRNWGtGTW9OMkZiZmIzUlh6V1ZBIIEC'
