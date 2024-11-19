@@ -16,6 +16,12 @@ import platform
 def get_work_dir():
     return Path(__file__).parent.parent.parent
 
+def load_env():
+    from dotenv import load_dotenv
+    load_dotenv(get_work_dir() / '.env')
+
+
+
 def load_driver2(headless = True):
     work_dir = get_work_dir()
 

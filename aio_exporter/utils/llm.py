@@ -13,7 +13,7 @@ def llm_query(query ,  history  = []  ):
     llm = ChatOpenAI(
         model_name =  os.getenv('LLM_MODEL_NAME') ,
         openai_api_base = os.getenv('LLM_URL') ,
-        openai_api_key = os.getenv('SILICON_TOKEN')
+        openai_api_key = os.getenv('API_KEY')
     )
     return llm.invoke(query).content
 

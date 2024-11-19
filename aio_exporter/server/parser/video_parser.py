@@ -23,7 +23,7 @@ load_dotenv(work_dir / '.env')
 import os
 import requests
 
-token = os.getenv('SILICON_TOKEN')
+token = os.getenv('API_KEY')
 
 
 

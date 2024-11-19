@@ -63,7 +63,7 @@
 [注意]
 视频结果展示会调用公网的asr服务,如需使用:
 1. 在本仓库下建立 .env 文件
-2. 添加硅基流动api SILICON_TOKEN=sk-xxx
+2. 添加硅基流动api API_KEY=sk-xxx
 3. 你也可以自行更换为自己的服务
 
 

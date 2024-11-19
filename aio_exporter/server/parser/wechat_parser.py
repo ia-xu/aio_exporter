@@ -9,6 +9,10 @@ import asyncio
 from aio_exporter.utils.dl_models import asr
 from aio_exporter.utils.mllm import mllm_query
 from aio_exporter.utils.llm import llm_query
+from aio_exporter.server.parser.mixin import ImageMixin
+import tempfile
+
+
 
 class WechatParser(BaseParser):
     def __init__(self):
@@ -79,10 +83,12 @@ class WechatParser(BaseParser):
         return markdown_text
 
 
-class MLLMWechatParser(WechatParser):
+class MLLMWechatParser(WechatParser , ImageMixin):
     def parse(self, html_file_path):
         md_text = super().parse(html_file_path)
-        md_text
+        with self.localize_images(md_text) as (updated_md_text , images, image_urls):
+            useful = self.find_useful_image(updated_md_text , images ,image_urls)
+            info = self.extract_information(updated_md_text , images , image_urls , useful)
 
 
 def test_download_withparse():
@@ -108,8 +114,13 @@ def test_download_withparse():
 
 def test_parse():
     parser = MLLMWechatParser()
-    html = '/mnt/d/root/projects/aio_exporter/database/download/wechat/蓝鲸课堂/842_你为什么要买保险？.html'
+    # html = '/mnt/d/root/projects/aio_exporter/database/download/wechat/蓝鲸insurance/16528_无力还款、两度延期，中煤财险销售子公司临资本金托管压力.html'
+    # html = '/mnt/d/root/projects/aio_exporter/database/download/wechat/中国太平洋保险/17914_国际气象节丨风里雪里，我们在你身边.html'
+    # html = '/mnt/d/root/projects/aio_exporter/database/download/wechat/沐熙花园/107_3%下架猝不及防.html'
+    html = '/mnt/d/root/projects/aio_exporter/database/download/wechat/中国保险行业协会/14979_【媒体走基层】为百姓生活装上保险“安全阀”——浙江宁波创新保险服务助力经济社会发展.html'
+
     parser.parse(html)
+
 
 if __name__ == '__main__':
     # unit test

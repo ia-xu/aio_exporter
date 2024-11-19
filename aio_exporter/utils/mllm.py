@@ -1,11 +1,16 @@
+import os
 import re
 import base64
 import io
+from pathlib import Path
 
 def encode_pil_image(image_path):
-    byte_io = io.BytesIO()
-    image_path.convert('RGB').save(byte_io, format='JPEG')
-    byte_data = byte_io.getvalue()
+    if isinstance(image_path, (str, Path )):
+        byte_data = open(image_path ,'rb').read()
+    else:
+        byte_io = io.BytesIO()
+        image_path.convert('RGB').save(byte_io, format='JPEG')
+        byte_data = byte_io.getvalue()
     base64_image = base64.b64encode(byte_data).decode('utf-8')
     return f"data:image/jpeg;base64,{base64_image}"
 
@@ -33,16 +38,18 @@ def convert(query, images):
         converted_value.append({"type": "text", "text": query})
     return converted_value
 
-def mllm_query(query , images , url , model = 'default-lora'):
+def mllm_query(query , images , url , model = 'default-lora' , api_key = None):
     from openai import OpenAI
     client = OpenAI(
-        api_key='EMPTY',
-        base_url='http://0.0.0.0:11005/v1'
+        api_key= api_key,  # 'EMPTY',
+        base_url=url,
     )
     query = convert(query, images)
     chat_response = client.chat.completions.create(
-        model=model, messages=[
+        model= model, messages=[
             {'role': 'user', 'content': query}
         ], stream=False,
+        temperature = 0.01
     )
     return chat_response.choices[0].message.content
+
