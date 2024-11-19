@@ -18,7 +18,7 @@ from io import BytesIO
 from aio_exporter.utils import get_work_dir
 from seleniumwire import webdriver
 from aio_exporter.utils import load_driver
-from aio_exporter.utils.struct import Login
+from aio_exporter.utils.structure import Login
 work_dir = get_work_dir()
 
 def create_bili_cookie():

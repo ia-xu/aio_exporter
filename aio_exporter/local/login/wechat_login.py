@@ -17,7 +17,7 @@ from io import BytesIO
 from aio_exporter.utils import get_work_dir
 from seleniumwire import webdriver
 from aio_exporter.utils import load_driver
-from aio_exporter.utils.struct import WechatLogin
+from aio_exporter.utils.structure import WechatLogin
 work_dir = get_work_dir()
 
 

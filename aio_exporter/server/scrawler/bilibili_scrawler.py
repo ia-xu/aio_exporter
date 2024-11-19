@@ -10,7 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from aio_exporter.utils import get_work_dir, load_driver2, get_headers, load_cookies
 from bs4 import BeautifulSoup
-from aio_exporter.utils.struct import Login
+from aio_exporter.utils.structure import Login
 from aio_exporter.utils import html_utils
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC

@@ -82,7 +82,7 @@ class WechatParser(BaseParser):
 class MLLMWechatParser(WechatParser):
     def parse(self, html_file_path):
         md_text = super().parse(html_file_path)
-
+        md_text
 
 
 def test_download_withparse():
@@ -107,8 +107,9 @@ def test_download_withparse():
     asyncio.run(unitest(url))
 
 def test_parse():
-    parser = WechatParser()
-    parser.parse()
+    parser = MLLMWechatParser()
+    html = '/mnt/d/root/projects/aio_exporter/database/download/wechat/蓝鲸课堂/842_你为什么要买保险？.html'
+    parser.parse(html)
 
 if __name__ == '__main__':
     # unit test
