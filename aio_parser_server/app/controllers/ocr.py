@@ -33,12 +33,18 @@ class OCRController(Controller):
             if OCR_MODELS['torchocr'] is None:
                 model = TorchOCRModel()
                 OCR_MODELS['torchocr'] = model
+            else:
+                model = OCR_MODELS['torchocr']
+
         elif 'gotocr' in model_name:
             if OCR_MODELS['gotocr'] is None:
                 model = GOTModel()
                 OCR_MODELS['gotocr'] = model
+            else:
+                model = OCR_MODELS['gotocr']
         else:
             return {}
+
 
         files = data.get('file')
         if len(files) != 1:

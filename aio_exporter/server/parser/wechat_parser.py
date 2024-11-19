@@ -6,6 +6,9 @@ import markdownify
 from aio_exporter.utils import html_utils
 import os
 import asyncio
+from aio_exporter.utils.dl_models import asr
+from aio_exporter.utils.mllm import mllm_query
+from aio_exporter.utils.llm import llm_query
 
 class WechatParser(BaseParser):
     def __init__(self):
@@ -75,8 +78,14 @@ class WechatParser(BaseParser):
         markdown_text = html_utils.clean_html(md_toutu + md_text)
         return markdown_text
 
-if __name__ == '__main__':
-    # unit test
+
+class MLLMWechatParser(WechatParser):
+    def parse(self, html_file_path):
+        md_text = super().parse(html_file_path)
+
+
+
+def test_download_withparse():
     from aio_exporter.server.downloader import WechatDownloader
     from aio_exporter.server.downloader.wechat_downloader import wechat_dir
 
@@ -95,5 +104,13 @@ if __name__ == '__main__':
         os.remove(debug_file)
         return result
 
-
     asyncio.run(unitest(url))
+
+def test_parse():
+    parser = WechatParser()
+    parser.parse()
+
+if __name__ == '__main__':
+    # unit test
+    test_parse()
+

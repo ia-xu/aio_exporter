@@ -9,7 +9,10 @@
     - GOT-2.0
     - Whisper-Large
     - Paddle OCR
-    - FunASR 
+    - FunASR
+
+
+## 以下服务可以通过 swift 启动,这里不做过多处理
     - Qwen2VL 
     - Qwen2.514B 
 

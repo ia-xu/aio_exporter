@@ -53,4 +53,4 @@ class GOTModel:
         )
         out = self .formatter.generate(inputs)
 
-        return out
+        return {'text': out}

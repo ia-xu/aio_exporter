@@ -3,9 +3,13 @@ import json
 import time
 from pathlib import Path
 # from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from seleniumwire import webdriver
+from loguru import logger
+try:
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.chrome.options import Options
+    from seleniumwire import webdriver
+except:
+    logger.warning('can not use selenium in this platform')
 import platform
 
 

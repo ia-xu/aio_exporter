@@ -21,7 +21,7 @@ class TorchOCRModel:
         det[0]['points'] = det[0]['points'].astype(int).tolist()
         return det
 
-    def ocr(self , image_path, **kwargs):
+    def ocr(self , image_path, *args , **kwargs):
         det_result = self.det.detect(image_path)
         im = cv2.imread(str(image_path), cv2.IMREAD_IGNORE_ORIENTATION | cv2.IMREAD_COLOR)
         img_crop_list = []

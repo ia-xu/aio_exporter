@@ -6,6 +6,7 @@
 import os
 from aio_exporter.utils import sql_utils
 from aio_exporter.utils.sql_utils import  *
+from tqdm import tqdm
 
 for source in ['wechat','bilibili']:
     session = sql_utils.init_sql_session(source)
@@ -14,7 +15,7 @@ for source in ['wechat','bilibili']:
         ArticleStorage.status.in_(['下载成功', '正在下载'])
     ).all()
 
-    for article in articles:
+    for article in tqdm(articles):
         # 如果 status 为 '下载成功' 且 storage_path 不存在，将 status 变为 '尚未开始'
         if article.status == '下载成功':
             if not os.path.exists(article.storage_path):
@@ -30,13 +31,13 @@ for source in ['wechat','bilibili']:
 
         # 如果 status 为 '正在下载'，将 status 变为 '尚未开始'
         elif article.status == '正在下载':
-            logger.info(f"Article ID {article.id} is currently '正在下载'. Changing status to '尚未开始'.")
+            logger.info(f"{source} Article ID {article.id} is currently '正在下载'. Changing status to '尚未开始'.")
             article.status = '尚未开始'
             # 如果 storage_path 存在，删除文件或文件夹
             if os.path.exists(article.storage_path):
                 if os.path.isfile(article.storage_path):
                     os.remove(article.storage_path)
-                    logger.info(f"Deleted file at path: {article.storage_path} for article ID {article.id}.")
+                    logger.info(f"{source} Deleted file at path: {article.storage_path} for article ID {article.id}.")
                 elif os.path.isdir(article.storage_path):
                     # 使用 shutil.rmtree 删除非空文件夹
                     import shutil
