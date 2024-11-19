@@ -1,7 +1,7 @@
 import random
 from pathlib import Path
 from aio_exporter.utils import get_work_dir, load_driver, get_headers, load_cookies
-from aio_exporter.utils.struct import WechatLogin
+from aio_exporter.utils.structure import WechatLogin
 from aio_exporter.server.scrawler.base_scrawler import BaseScrawler
 from dataclasses import dataclass
 import requests
