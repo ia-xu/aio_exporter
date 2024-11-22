@@ -102,25 +102,9 @@ def download():
 
                     return
 
-                with tempfile.TemporaryDirectory() as td:
-                    image_links = extract_image_links(md_text)
-                    # 3. 下载图片并保存到临时文件夹
-                    local_image_paths = []
-                    for link in image_links:
-                        response = requests.get(link)
-                        save_suffix = Image.open(BytesIO(response.content)).format
-
-                        # 获取文件名
-                        hashcode = hashlib.md5(link.encode('utf-8')).hexdigest()
-                        local_path = os.path.join(td, hashcode  + f'.{save_suffix}')
-                        with open(local_path, 'wb') as f:
-                            f.write(response.content)
-                        local_image_paths.append(local_path)
-                    for original_link, local_path in zip(image_links, local_image_paths):
-                        md_text = md_text.replace(original_link, local_path)
-
-                    md_text = html_utils.markdown_insert_images(md_text)
-                    st.markdown(md_text,unsafe_allow_html=True)
+                with parser[source].localize_images(md_text) as (local_md_text , _ , _ ):
+                    md_text = html_utils.markdown_insert_images(local_md_text)
+                    st.markdown(md_text, unsafe_allow_html=True)
 
             session.close()
 download()
