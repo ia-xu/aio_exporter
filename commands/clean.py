@@ -22,7 +22,7 @@ for source in ['wechat','bilibili']:
                 logger.warning(f"Storage path does not exist for article ID {article.id}. Changing status to '尚未开始'.")
                 article.status = '尚未开始'
             elif source == 'bilibili':
-                mp4_files = list(Path(article.storage_path).glob('*.mp4'))
+                mp4_files = list(Path(article.storage_path).rglob('*.mp4'))
                 if len(mp4_files) == 0 :
                     logger.warning(
                         f"Video does not exist for article ID {article.id}. Changing status to '尚未开始'.")
