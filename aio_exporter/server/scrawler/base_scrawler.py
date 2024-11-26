@@ -26,6 +26,10 @@ class BaseScrawler:
         session = Session()
         return session
 
+    def get_prev_articles(self , author):
+        ids = sql_utils.get_ids_by_author(self.session , author)
+        articles = sql_utils.get_articles_by_ids(self.session , ids)
+        return articles
 
     def count_by_author(self, author):
         return sql_utils.count_articles_by_author(

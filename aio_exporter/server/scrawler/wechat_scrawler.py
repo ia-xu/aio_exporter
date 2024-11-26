@@ -122,6 +122,26 @@ class WechatScrawler(BaseScrawler):
         logger.info(f'确认! {account} 文章数量总数为 {total_num}')
         return total_num
 
+    def get_new_article_list(self, account, publish_count):
+        mask = np.zeros(publish_count)
+        articles = self.get_prev_articles(account)
+        if 'metainfo' in articles.columns:
+            for queryinfo in articles['metainfo'].unique():
+                queryinfo = json.loads(queryinfo)
+                diff = publish_count - queryinfo['publish_count']
+                start = queryinfo['start']
+                rid = queryinfo['rid']
+                mask[diff + start + rid] = 1
+        last = -1
+        for  index in range(len(mask)):
+            if mask[index] == 0:
+                last = index
+                continue
+            break
+        # 老的文章放在前面
+        return list(range(last + 1 ))[::-1]
+
+
 
 
     def walk_through_article(self, account , fake_id, max_count = 200):
@@ -132,14 +152,8 @@ class WechatScrawler(BaseScrawler):
 
         # 判断是否 up 发布了新的内容
         # 检查历史数据，分析已经获取了多少内容的数据
-        count_article_by_author = self.count_by_author(account)
-        article_indices = list(range(publish_count))[::-1]
+        new_article_list = self.get_new_article_list(account , publish_count)
 
-        # debug: 已经入库的部分
-        # debug_data = sql_utils.get_articles_by_ids(self.session, sql_utils.get_ids_by_author(self.session, account, 'wechat'))
-
-        # 去除掉已经遍历的部分
-        new_article_list = article_indices[count_article_by_author:]
         # 按照50个一个等间隔的划分
         count = self.num_for_once
         intervals = []
@@ -175,14 +189,14 @@ class WechatScrawler(BaseScrawler):
                     continue
                 row = json.loads(row['publish_info'])
                 appmsgex = row['appmsgex']
-                for meta in appmsgex:
+                for mid , meta in enumerate(appmsgex):
                     # 每天可能会更新很多的文章，需要遍历当前所有的文章列表
                     title = meta['title']
                     url = meta['link']
                     create_time = datetime.datetime.fromtimestamp(meta['create_time'])
                     status = self.insert_article(account, title, url, create_time , metainfo = query_info)
                     if status:
-                        logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
+                        logger.debug(f'成功插入当天第{mid+1}篇文章:\t{create_time}\t{title}!')
                         titles.append({'author':account , 'title':title})
                     else:
                         logger.info('why?')
@@ -260,5 +274,5 @@ if __name__ == "__main__":
     # scrawler.walk()
     # print(scrawler.count())
     fake_id = scrawler.search_bizno('深蓝保')
-    # articles = scrawler.walk_through_article('深蓝保', fake_id, max_count=500)
-    articles = scrawler.get_article_list(fake_id , 0 , 20)
+    articles = scrawler.walk_through_article('深蓝保', fake_id, max_count=500)
+    # articles = scrawler.get_article_list(fake_id , 0 , 20)
