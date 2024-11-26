@@ -26,16 +26,39 @@ scrawler:
       - 明亚保险经纪
       - 蜗牛保险经纪
       - 关哥说险
+      - 饭统戴老板
+      - 三折人生
+      - 券商中国
+      - 英为财情
+      - 图解金融
+      - 李迅雷金融与投资
+      - 越女事务所
+      - 也谈钱
+      - 大张羽
     max_count: 300
     num_for_once: 15
   bilibili:
     SubscriptionAccounts:
-      - name: 二姐聊保障
-        id: 353017413
-      - name: 明亚保险经纪卢华营
-        id: 473336381
-      - name: 深蓝保测评
-        id: 702718353
+      - name : 二姐聊保障
+        id : 353017413
+      - name : 明亚保险经纪卢华营
+        id : 473336381
+      - name : 深蓝保
+        id : 454525170
+      - name : 深蓝保测评
+        id : 702718353
+      - name: 圆镜保险insurance
+        id: 3546564784031894
+      - name: 慧择保险
+        id: 487898552
+      - name: 白老师保险测评
+        id: 3493141451638901
+      - name: 一抹地气
+        id: 345227902
+      - name: 丰险笔记
+        id: 445844655
+      - name: 精算君Alex
+        id: 394070477
       - name: Ginger的保险笔记本
         id: 2087454587
       - name: 阿比Dal
@@ -46,8 +69,23 @@ scrawler:
         id: 295438644
       - name: 寿训笔记
         id: 505753530
+      - name: 懂保兄弟
+        id : 372739961
+      - name: 爆肝输出的黄药师
+        id : 172292598
+      - name: 巫师财经
+        id: 472747194
+      - name: 小Lin说
+        id: 520819684
+      - name: 所长林超
+        id: 520155988
+      - name: 阿牛读财
+        id: 477547674
+      - name: 复利的奇迹ETF基金理财
+        id: 383587023
+
     # 每次稍微搞一点，否则会被反爬虫
-    max_count: 120
+    max_count: 250
 
 downloader:
   wechat:
