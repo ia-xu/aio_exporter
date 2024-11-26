@@ -149,7 +149,7 @@ class BiliBiliDownloader(BaseDownloader):
         if not path.exists():
             path.mkdir()
 
-        if path.exists() and len([file for file in path.glob('*.mp4')]) > 0 :
+        if path.exists() and len([file for file in path.rglob('*.mp4')]) > 0 :
             return '下载成功'
 
         conda_path = '/root/miniconda3/bin/conda'

@@ -174,16 +174,18 @@ class WechatScrawler(BaseScrawler):
                     self.insert_article(account , title , url , datetime.datetime.now() , metainfo=query_info)
                     continue
                 row = json.loads(row['publish_info'])
-                meta = row['appmsgex'][0]
-                title = meta['title']
-                url = meta['link']
-                create_time = datetime.datetime.fromtimestamp(meta['create_time'])
-                status = self.insert_article(account, title, url, create_time , metainfo = query_info)
-                if status:
-                    logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
-                    titles.append({'author':account , 'title':title})
-                else:
-                    logger.info('why?')
+                appmsgex = row['appmsgex']
+                for meta in appmsgex:
+                    # 每天可能会更新很多的文章，需要遍历当前所有的文章列表
+                    title = meta['title']
+                    url = meta['link']
+                    create_time = datetime.datetime.fromtimestamp(meta['create_time'])
+                    status = self.insert_article(account, title, url, create_time , metainfo = query_info)
+                    if status:
+                        logger.debug(f'成功插入文章:\t{create_time}\t{title}!')
+                        titles.append({'author':account , 'title':title})
+                    else:
+                        logger.info('why?')
             rand_sleep = np.random.randint(3, 10)
             time.sleep(rand_sleep)
         logger.info(f'更新数据库,为{account}找到了{current_count}篇文章')
@@ -256,4 +258,7 @@ if __name__ == "__main__":
     # scrawler.walk()
     # scrawler.login_status()
     # scrawler.walk()
-    print(scrawler.count())
+    # print(scrawler.count())
+    fake_id = scrawler.search_bizno('深蓝保')
+    # articles = scrawler.walk_through_article('深蓝保', fake_id, max_count=500)
+    articles = scrawler.get_article_list(fake_id , 0 , 20)
