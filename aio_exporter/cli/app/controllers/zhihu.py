@@ -3,6 +3,9 @@ from aio_exporter.server.parser import ZhihuParser
 from blacksheep.server.controllers import Controller, get, post
 from typing import List, Optional ,Dict
 import numpy as np
+from aio_exporter.utils import sql_utils
+
+session = sql_utils.init_sql_session('zhihu')
 
 class ZhihuController(Controller):
     @classmethod
@@ -21,7 +24,12 @@ class ZhihuController(Controller):
         # 随机等待，避免过快
         import time
         time.sleep(np.random.rand() * 2  + 1)
-        return {'content' : parser.parse(html)}
+
+        title = ''
+        article = sql_utils.get_article_by_url(session , url)
+        if article:
+            title = article[0].title
+        return {'content' : parser.parse(html) , 'title' : title}
 
 
 

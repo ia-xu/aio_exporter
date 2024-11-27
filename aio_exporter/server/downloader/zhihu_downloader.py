@@ -195,11 +195,13 @@ class ZhihuDownloader(BaseDownloader):
         return self.driver.page_source
 
 if __name__ == '__main__':
-
-    ZhihuDownloader().download_with_record(
+    from aio_exporter.server.parser import ZhihuParser
+    html = ZhihuDownloader().download_with_record(
         # 'https://www.zhihu.com/question/20745287'
-        'https://www.zhihu.com/tardis/bd/art/506750046'
+        # 'https://www.zhihu.com/tardis/bd/art/506750046'
+        'https://www.zhihu.com/question/38632401/answer/1060250796'
     )
+    parse = ZhihuParser().parse(html)
 
 
 

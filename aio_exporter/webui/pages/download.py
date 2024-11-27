@@ -8,6 +8,7 @@ from aio_exporter.utils import sql_utils
 from aio_exporter.utils import get_work_dir
 from aio_exporter.server.parser import WechatParser
 from aio_exporter.server.parser import SenseVoiceSimpleParser
+from aio_exporter.server.parser import ZhihuParser
 import pandas as pd
 from pathlib import Path
 import tempfile
@@ -16,7 +17,8 @@ import os
 
 parser = {
     'wechat': WechatParser(),
-    'bilibili' : SenseVoiceSimpleParser()
+    'bilibili' : SenseVoiceSimpleParser(),
+    'zhihu' : ZhihuParser()
 }
 
 
@@ -36,7 +38,7 @@ def extract_image_links(md_text):
 
 def download():
 
-    cls = ['wechat' , 'bilibili']
+    cls = ['wechat' , 'bilibili', 'zhihu']
 
     tabs = st.tabs(cls)
 
@@ -64,7 +66,7 @@ def download():
 
             # 随机展示
             # Add a slider to select the number of articles to display
-            num_articles_to_display = st.slider('Select the number of articles to display', min_value=1, max_value=len(filter_df_), value=50, step=1)
+            num_articles_to_display = st.slider('Select the number of articles to display', min_value=1, max_value=len(filter_df_), value=min(len(filter_df_) , 50), step=1)
 
             # Select a random subset of articles based on the slider value
             selected_articles = filter_df_.sample(n=num_articles_to_display, random_state=42)

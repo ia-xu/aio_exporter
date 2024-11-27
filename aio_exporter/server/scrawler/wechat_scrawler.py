@@ -246,8 +246,11 @@ class WechatScrawler(BaseScrawler):
                 # 要更新的文章数量不多，不过多的占用查询资源
                 logger.info(f'Skip {account} for article num {stats[account]} not too many')
                 continue
-
-            fake_id = self.search_bizno(account)
+            try:
+                fake_id = self.search_bizno(account)
+            except:
+                print('account error !! {}'.format(account))
+                continue
             articles = self.walk_through_article(account , fake_id,  max_count = stats[account])
             new_articles.extend(articles)
             if len(new_articles) >= self.max_count:

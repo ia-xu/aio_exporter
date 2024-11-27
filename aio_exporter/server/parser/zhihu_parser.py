@@ -19,7 +19,7 @@ class ZhihuParser(BaseParser):
             html = html_file_path
 
         soup = BeautifulSoup(html,'html.parser')
-        if soup.find(class_ = 'QuestionButtonGroup'):
+        if soup.find(class_ = 'QuestionButtonGroup') and soup.find(class_ = 'QuestionAnswers-answers'):
             # 说明是知乎的提问
             answers = soup.find(class_ = 'QuestionAnswers-answers')
             answers = answers.find_all(class_ = 'List-item')
@@ -30,6 +30,13 @@ class ZhihuParser(BaseParser):
                 md_zw = markdownify.markdownify(str(answer))
                 md_all += html_utils.clean_html(md_zw)
                 md_all += sep
+        elif soup.find(class_ = 'ContentItem AnswerItem'):
+            md_all = ""
+            content = soup.find(class_ = 'ContentItem AnswerItem')
+            self.format_img(content)
+            md_zw = markdownify.markdownify(str(content))
+            md_all += html_utils.clean_html(md_zw)
+
         else:
             content = soup.find(class_='Post-Main Post-NormalMain')
             if not content:
