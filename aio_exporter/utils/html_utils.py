@@ -31,7 +31,7 @@ def to_markdown(article_content, plan_text):
 
 
 def clean_html(text):
-    text = text.strip().replace(u'\u3000', u' ').replace(u'\xa0', u' ')
+    text = text.strip().replace(u'\u3000', u' ').replace(u'\xa0', u' ').replace('\u200b','')
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = text.replace('﻿','')
 

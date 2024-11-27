@@ -8,6 +8,7 @@
 
     - wechat
     - bilibili
+    - zhihu(支持了下载和解析,暂时不支持爬取)
 
 ## 使用方式
 

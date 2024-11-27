@@ -30,13 +30,7 @@ class WechatParser(BaseParser):
                 p.extract()
 
 
-    def format_img(self,content):
-        img_tags = content.find_all('img')
-        for idx, img_tag in enumerate(img_tags):
-            if img_tag.get('data-src') and not img_tag.get('src'):
-                img_tag['src'] = img_tag['data-src']
-                # 添加 alt ，区别于超链接，让转出来的 markdown 带有这个链接
-                img_tag['alt'] = 'img'
+
 
 
 

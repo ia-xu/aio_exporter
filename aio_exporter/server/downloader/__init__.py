@@ -1,2 +1,3 @@
 from .wechat_downloader import WechatDownloader
 from .bilibili_downloader import BiliBiliDownloader
+from .zhihu_downloader import ZhihuDownloader

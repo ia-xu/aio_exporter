@@ -8,3 +8,7 @@ class Login:
 @dataclass
 class WechatLogin(Login):
     token: int = None
+
+@dataclass
+class ZhihuLogin(Login):
+    zse_ck: str = None
