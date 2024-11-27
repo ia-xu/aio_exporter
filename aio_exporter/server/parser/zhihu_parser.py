@@ -9,6 +9,11 @@ class ZhihuParser(BaseParser):
     def __init__(self ):
         super().__init__()
 
+    def clean_img(self , soup):
+        for p in soup.find_all(class_ = 'origin_image zh-lightbox-thumb lazy'):
+            p.extract()
+
+
     def parse(self , html_file_path):
         if 'ERROR' in html_file_path:
             return html_file_path
@@ -19,6 +24,9 @@ class ZhihuParser(BaseParser):
             html = html_file_path
 
         soup = BeautifulSoup(html,'html.parser')
+
+        self.clean_img(soup)
+
         if soup.find(class_ = 'QuestionButtonGroup') and soup.find(class_ = 'QuestionAnswers-answers'):
             # 说明是知乎的提问
             answers = soup.find(class_ = 'QuestionAnswers-answers')
