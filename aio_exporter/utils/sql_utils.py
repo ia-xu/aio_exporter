@@ -123,6 +123,13 @@ def get_ids_by_author(session, author, source=None):
         query = query.filter(Article.source == source)
     return [row.id for row in query.all()]
 
+def get_article_by_url(session , url : str ):
+    query = session.query(Article)
+    query = query.filter(Article.url == url)
+    if not query:
+        return None
+    articles = query.all()
+    return articles
 
 def get_articles_by_ids(session, article_ids : List = None, to_pd = True):
     """

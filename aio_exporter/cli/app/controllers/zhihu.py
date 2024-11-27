@@ -17,7 +17,7 @@ class ZhihuController(Controller):
     async def simple_parse(self, url: str) -> Dict[str, str]:
         downloader = ZhihuDownloader()
         parser = ZhihuParser()
-        html = downloader._download(url)
+        html = downloader.download_with_record(url)
         # 随机等待，避免过快
         import time
         time.sleep(np.random.rand() * 2  + 1)

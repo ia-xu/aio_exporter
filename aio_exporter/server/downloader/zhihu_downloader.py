@@ -1,17 +1,32 @@
+import json
+
 from aio_exporter.utils import load_driver2
 from aio_exporter.utils import load_cookies
 import readability
 import markdownify
 import html_text
+import os
 from pathlib import  Path
 from tqdm import tqdm
 import requests
 from bs4 import BeautifulSoup
 from contextlib import contextmanager
+from aio_exporter.utils import sql_utils , html_utils
+from aio_exporter.server.downloader.base_downloader import BaseDownloader
+from aio_exporter.utils.utils import get_work_dir
+from loguru import logger
 
-class ZhihuDownloader:
+work_dir = get_work_dir()
+database = work_dir / 'database' / 'download'
+database.mkdir(exist_ok=True)
+zhihu_dir = database / 'zhihu'
+zhihu_dir.mkdir(exist_ok=True)
+
+
+class ZhihuDownloader(BaseDownloader):
     def __init__(self):
         self.driver = None
+        super().__init__('zhihu')
 
     def load_driver(self):
         self.driver = load_driver2(headless=False)
@@ -27,7 +42,7 @@ class ZhihuDownloader:
                 self.driver.add_cookie(cookie)
 
     @contextmanager
-    def session(self):
+    def request_session(self):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36'
         }
@@ -40,9 +55,126 @@ class ZhihuDownloader:
         session.headers.update(headers)
         yield session
 
+    def find_author(self,url ,soup):
+        if 'question' in url:
+            author = 'question'
+        elif 'zhuanlan' in url:
+            author = soup.find(class_='AuthorInfo').text
+        elif 'tardis' in url:
+            author = 'seller'
+        else:
+            raise NotImplementedError()
+        return author
+
+    def find_issue_date(self , url , soup):
+        if 'zhuanlan' in url or 'tardis' in url:
+            issue_date = soup.find(class_ = 'ContentItem-time').text
+        elif 'question' in url:
+            issue_date = None
+        else:
+            raise NotImplementedError()
+        return issue_date
+
+    def find_metainfo(self, url , soup):
+        meta = {}
+        if 'question' in url :
+            meta['question'] = soup.find(class_ = 'QuestionHeader-title').text
+            # 给出当前所有列举的回答
+            meta['author'] = []
+            for author in soup.find_all(class_ = 'UserLink AuthorInfo-name'):
+                meta['author'].append(html_utils.clean_html(author.text))
+            meta['issue_date'] = []
+            for issue_date in soup.find_all(class_ = 'ContentItem-time'):
+                meta['issue_date'].append(html_utils.clean_html(issue_date.text))
+
+        return json.dumps(meta , ensure_ascii=False )
+
+
+    def download_with_record(self , url):
+        # 对网页进行下载，并主动添加到数据库当中
+        # 这里的逻辑和正常下载逻辑不同，这里是首先主动的解析url,然后将 url 添加到 article 库当中
+        # 然后分配下载地址，并完成后续操作
+
+        # 首先检查 是否存在 url 对应的内容
+        articles = sql_utils.get_article_by_url(self.session , url)
+        if articles:
+            # 说明之前处理过，不重复处理
+            storage_path = self.gather_article_with_storage([_.id for _ in articles]).storage_path[0]
+            if os.path.exists(storage_path):
+                logger.info('加载已经下载过的文档: {}'.format(Path(storage_path).name))
+                with open(storage_path , 'r' , encoding='utf-8') as f:
+                    return f.read()
+
+
+        html = self._download(url)
+        if '[ERROR]' in html:
+            return html
+
+        articles = self.insert_new_download_article(url , html)
+        article = articles[0]
+        article_download_path = self.assign_path(article )
+        try:
+
+            with open(article_download_path , 'w' , encoding='utf-8') as f:
+                f.write(html)
+            # 这里简单一点，不考虑重试或者其他情况
+            self.upsert_status(article.id , '下载成功' , 1)
+        except:
+            self.upsert_status(article.id, '下载失败', 1)
+        return html
+
+
+
+
+    def assign_path(self , article ):
+        # 分配下载地址
+        account_dir = zhihu_dir / article.author
+        account_dir.mkdir(exist_ok=True)
+        title = self.clean_title(article.title)
+        if article.author == 'question':
+            act_author = '__'.join(json.loads(article.metainfo)['author'])
+            title = act_author + '_' + title
+
+        file_path = account_dir / f'{article.id}_{title}.html'
+        # 检查filepath 是否已经存在
+        idx = 0
+        while self.check_file_path_exists(file_path):
+            # 更新位置
+            file_path = account_dir / f'{article.id}_{idx}_{title}.html'
+            idx += 1
+
+        logger.info(f'为账号{article.author} 文章分配路径到 {file_path.name}.html')
+        self.insert_assigned_path(
+            article.id,
+            file_path,
+            '尚未开始',
+            'file',
+            0
+        )
+        return file_path
+
+
+
+
+    def insert_new_download_article(self, url , html):
+        soup = BeautifulSoup(html, 'lxml')
+        title = soup.find('title').text
+        author = self.find_author(url , soup)
+        issue_date = self.find_issue_date(url , soup)
+        metadata = self.find_metainfo(url , soup)
+
+        # 插入新的数据
+        sql_utils.insert_if_not_exists(
+            self.session , title , author , url , issue_date , self.source_name ,metadata
+        )
+        # 分配下载路径,并下载
+        articles = sql_utils.get_article_by_url(self.session, url)
+        return articles
+
+
 
     def _download(self , url):
-        with self.session() as session:
+        with self.request_session() as session:
             response = session.get(url)
             response.encoding = response.apparent_encoding
             html = response.text
@@ -58,7 +190,9 @@ class ZhihuDownloader:
 
 if __name__ == '__main__':
 
-    pass
+    ZhihuDownloader().download_with_record(
+        'https://www.zhihu.com/question/20745287'
+    )
 
 
 

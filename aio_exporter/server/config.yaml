@@ -100,3 +100,5 @@ downloader:
     max_download_size: 60
     # 同时下载的视频数量
     batch_size : 4
+  zhihu:
+    batch_size: 4
