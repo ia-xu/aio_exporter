@@ -6,6 +6,8 @@ import readability
 import markdownify
 import html_text
 import os
+from datetime import datetime
+import re
 from pathlib import  Path
 from tqdm import tqdm
 import requests
@@ -69,6 +71,10 @@ class ZhihuDownloader(BaseDownloader):
     def find_issue_date(self , url , soup):
         if 'zhuanlan' in url or 'tardis' in url:
             issue_date = soup.find(class_ = 'ContentItem-time').text
+            # 从中提取出来 20xx-xx-xx 的日期
+            date_str = re.search('\d{4}-\d{2}-\d{2}' , issue_date).group()
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            return date_obj
         elif 'question' in url:
             issue_date = None
         else:
@@ -191,7 +197,8 @@ class ZhihuDownloader(BaseDownloader):
 if __name__ == '__main__':
 
     ZhihuDownloader().download_with_record(
-        'https://www.zhihu.com/question/20745287'
+        # 'https://www.zhihu.com/question/20745287'
+        'https://www.zhihu.com/tardis/bd/art/506750046'
     )
 
 
