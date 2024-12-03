@@ -16,6 +16,13 @@ class ZhihuController(Controller):
     def class_name(cls) -> str:
         return "zhihu"
 
+    @get('/check_status')
+    async def check_status(self):
+        downloader = ZhihuDownloader()
+        return {'status': downloader.check_status()}
+
+
+
     @get("/simple_parse")
     async def simple_parse(self, url: str) -> Dict[str, str]:
         downloader = ZhihuDownloader()

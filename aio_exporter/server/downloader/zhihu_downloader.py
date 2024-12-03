@@ -96,6 +96,19 @@ class ZhihuDownloader(BaseDownloader):
         return json.dumps(meta , ensure_ascii=False )
 
 
+    def check_status(self):
+        # 找一篇历史文章重新下载
+        test_url = 'https://zhuanlan.zhihu.com/p/260085891'
+        # 检查下载结果是否包含正确内容
+        html = self._download(test_url)
+        valid_texts = [
+            '所以需要看重综合意外，挑选出较实用的那一款，尤其是常年出差的工作党，更需要看关于交通出行方面的综合保障。',
+            '所以今天学姐打算和大家好好聊聊意外险，本文篇幅较长，心急的朋友可以看看学姐之前写过的浓缩版的科普文哦',
+            '因此，我们在挑选意外的时候需要根据年龄段的不同，来选择保障内容侧重点不同的意外险。像小孩子和老年人磕磕绊绊很常见，这个年龄的人群就需要着重看意外医疗的保障是否充足。',
+            '亚太超人把猝死也纳入保障范围内，还算是跟得上意外险的潮流，适合工作强度很大的朋友，比如那些经常熬夜、作息不规律的上班一族。'
+        ]
+        return all([ text in html for text in valid_texts])
+
     def download_with_record(self , url):
         # 对网页进行下载，并主动添加到数据库当中
         # 这里的逻辑和正常下载逻辑不同，这里是首先主动的解析url,然后将 url 添加到 article 库当中
@@ -196,12 +209,15 @@ class ZhihuDownloader(BaseDownloader):
 
 if __name__ == '__main__':
     from aio_exporter.server.parser import ZhihuParser
-    html = ZhihuDownloader().download_with_record(
-        # 'https://www.zhihu.com/question/20745287'
-        # 'https://www.zhihu.com/tardis/bd/art/506750046'
-        'https://www.zhihu.com/question/38632401/answer/1060250796'
-    )
-    parse = ZhihuParser().parse(html)
+    # html = ZhihuDownloader().download_with_record(
+    #     # 'https://www.zhihu.com/question/20745287'
+    #     # 'https://www.zhihu.com/tardis/bd/art/506750046'
+    #     'https://www.zhihu.com/question/38632401/answer/1060250796'
+    # )
+    # parse = ZhihuParser().parse(html)
+
+    zhihudownloader = ZhihuDownloader()
+    zhihudownloader.check_status()
 
 
 
