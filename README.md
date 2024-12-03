@@ -10,6 +10,10 @@
     - bilibili
     - zhihu(支持了下载和解析,暂时不支持爬取)
 
+## 支持搜索工具
+    - kimichat (调用 api/search/kimisearch?question={question})
+        - 利用 seleniumn 模拟 kimi 登录，向 kimi 发送问题并获取搜索到的 urls
+
 ## 使用方式
 
 ### On Linux Server

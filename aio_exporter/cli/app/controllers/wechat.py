@@ -108,6 +108,9 @@ class WechatController(Controller):
                     'mesasge' : f'{author} 不在当前搜索公众号名称当中',
                     'response' : []
                 }
+
+        valid_ids = sql_utils.gather_ids_by_storage_status(session, status='下载成功', source='wechat')
+        ids = list(set(ids) & set(valid_ids))
         all_data = sql_utils.get_articles_by_ids(session , ids ,to_pd=False)
 
         not_downloaded_ids = sql_utils.get_ids_not_in_article_storage(session)

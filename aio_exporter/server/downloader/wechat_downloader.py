@@ -16,7 +16,7 @@ import markdownify
 import readability
 from bs4 import BeautifulSoup
 import hashlib
-
+from pathlib import Path
 work_dir = get_work_dir()
 database = work_dir / 'database' / 'download'
 database.mkdir(exist_ok=True)
@@ -90,7 +90,7 @@ class WechatDownloader(BaseDownloader):
 
 
 
-    async def post_process_html(self, url , result, new_article = True):
+    async def post_process_html(self, url , result, new_article = True, driver = None):
         # 如果 new article == False , 表明现在处理的都是一些用 requests 处理失败的文章
         try:
             if result.status_code != 200:
@@ -121,7 +121,12 @@ class WechatDownloader(BaseDownloader):
             if not text and soup.find_all(class_ = 'share_content_page'):
                 # 可能是一个需要动态加载的网页内容
                 logger.info('use chrome driver to render js webpage')
-                driver = load_driver(headless=True)
+
+                close = True
+                if driver is None:
+                    close = False
+                    driver = load_driver(headless=True)
+
                 driver.get(url)
                 html = driver.page_source
                 soup = BeautifulSoup(html , 'html.parser')
@@ -130,7 +135,8 @@ class WechatDownloader(BaseDownloader):
                 for p in soup.find_all('p'):
                     text += p.text
                 # 及时关闭
-                driver.close()
+                if close:
+                    driver.close()
 
             if '环境异常' in text or '去验证' in text:
                 return None

@@ -12,3 +12,9 @@ class WechatLogin(Login):
 @dataclass
 class ZhihuLogin(Login):
     zse_ck: str = None
+
+
+@dataclass
+class KimiLogin(Login):
+    accesstoken : str = None
+    refreshtoken: str = None
