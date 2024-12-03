@@ -34,6 +34,7 @@ search_engine = None
 if os.environ.get("SEARCHXNG"):
     search_engine = SearXNG(api_base=os.environ.get("SEARCHXNG"))
 
+scrawler = KimiChatScrawler()
 
 class SearchController(Controller):
     @classmethod
@@ -58,7 +59,5 @@ class SearchController(Controller):
 
     @get("/kimisearch")
     async def kimisearch(self, question: str):
-        scrawler = KimiChatScrawler()
         urls = scrawler.search([question])
-        scrawler.close()
         return {"message": "success", "results": [{"url": url} for url in urls]}

@@ -104,14 +104,16 @@ class KimiChatScrawler:
             urls.append(url)
         return urls
 
-
+    def new_chat(self):
+        xpath = '//*[@id="root"]/div/div[1]/div[1]/div/div[1]/div/div[3]/div'
+        self.click(xpath)
 
     def search(self, queries):
 
-
         try:
-            self.locate_query()
+            self.new_chat()
             time.sleep(5)
+            logger.info('start new chat success...')
         except:
             print('error')
 
