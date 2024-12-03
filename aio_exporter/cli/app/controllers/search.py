@@ -61,4 +61,4 @@ class SearchController(Controller):
         scrawler = KimiChatScrawler()
         urls = scrawler.search([question])
         scrawler.close()
-        return {"message": "success", "results": [{{"url": url} for url in urls}]}
+        return {"message": "success", "results": [{"url": url} for url in urls]}
