@@ -86,7 +86,9 @@ scrawler:
 
     # 每次稍微搞一点，否则会被反爬虫
     max_count: 250
-
+  web:
+    allow_websites:
+      - zhihu
 downloader:
   wechat:
     # 单次做多下载文章数量
@@ -102,3 +104,73 @@ downloader:
     batch_size : 4
   zhihu:
     batch_size: 4
+  web:
+    allow_websites:
+      simple:
+        - domain: news.qq.com
+          title:
+            replace: [ _腾讯新闻 ]
+        - domain: www.thepaper.cn
+          title:
+            replace: [ "_澎湃新闻-The Paper" ]
+        - domain: www.sohu.com
+        - domain: sina.com
+          title:
+            replace: ['_新浪财经','_新浪网','__财经头条']
+        - domain: www.cs.com.cn
+          title:
+            replace: ['_中证网']
+        - domain:  www.cn-healthcare.com
+          title:
+            replace: ['|']
+          date:
+            type: fix_class
+            class_: [dt_year , dt_month]
+            regex: '[0-9]{4} [0-9]{2}/[0-9]{2}'
+            format: "%Y %m/%d"
+        - domain: m.21jingji.com
+          title:
+            replace: ['- 21财经']
+        - domain: www.cbimc.cn
+        - domain: www.ce.cn
+          title:
+            replace : ['_中国经济网']
+          date:
+            type: auto
+            index: 0
+        - domain: people.com.cn
+          date:
+            type: url
+            regex: '[0-9]{4}/[0-9]{4}'
+            format: "%Y/%m%d"
+        - domain: www.cpic.com
+          date:
+            type: url
+        - domain: www.shenlanbao.com
+          forbid: [topics]
+          encoding: utf-8
+        - domain: www.csai.cn
+        - domain: xueqiu.com
+          title:
+            type: h1
+        - domain: post.smzdm.com
+          date:
+            index: 0
+        - domain: news.vobao.com
+          title:
+            type: h1
+        - domain: www.99.com.cn
+        - domain: www.chinanews.com.cn
+          title:
+            replace: ['-中新网']
+          encoding: utf-8
+        - domain: www.jsw.com.cn
+          title:
+            type: h1
+      complex:
+        - domain: www.gov.cn
+          date:
+            search: true
+        - domain: www.jiemian.com
+          title:
+            repalce: [ '|界面新闻' ]

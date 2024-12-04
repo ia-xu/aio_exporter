@@ -31,7 +31,7 @@ class BaseDownloader:
             self.session , ids
         )
 
-    def insert_assigned_path(self,id,file_path,status, file_type,download_count):
+    def insert_assigned_path(self, id, file_path,status, file_type,download_count):
         file_path = str(file_path)
         sql_utils.upsert_article_storage(
             self.session,

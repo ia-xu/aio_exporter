@@ -59,5 +59,9 @@ class SearchController(Controller):
 
     @get("/kimisearch")
     async def kimisearch(self, question: str):
-        urls = scrawler.search([question])
-        return {"message": "success", "results": [{"url": url} for url in urls]}
+        try:
+            urls = scrawler.search([question])
+            return {"message": "success", "results": [{"url": url} for url in urls]}
+        except:
+            return {'message' : "fail" , "results" : []}
+

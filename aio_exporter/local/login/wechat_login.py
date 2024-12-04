@@ -51,11 +51,11 @@ if __name__ == '__main__':
     login = WechatLogin(cookies , token)
     login = asdict(login)
 
-    # cookie_dir = work_dir  / 'cookies' / 'wechat'
-    # cookie_dir.mkdir(exist_ok=True)
-    #
-    # with open(cookie_dir / 'cookies.json' , 'w' , encoding='utf-8') as f:
-    #     json.dump(login , f , ensure_ascii=False , indent=4)
+    cookie_dir = work_dir  / 'cookies' / 'wechat'
+    cookie_dir.mkdir(exist_ok=True)
+
+    with open(cookie_dir / 'cookies.json' , 'w' , encoding='utf-8') as f:
+        json.dump(login , f , ensure_ascii=False , indent=4)
 
     # post 到远端
     # url = 'http://127.0.0.1:31006'

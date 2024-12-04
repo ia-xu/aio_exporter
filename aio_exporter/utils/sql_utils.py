@@ -436,3 +436,12 @@ def move_data(session , old_prefix, new_prefix):
     except Exception as e:
         session.rollback()
         print(f"更新失败: {e}")
+
+
+def get_downloaded_articles_with_storage_by_source(source):
+    session = init_sql_session(source)
+    data = get_storage(session)
+    data = pd.DataFrame(data)
+    ids = data[data.status == '下载成功'].id.to_list()
+    articles = gather_article_with_storage(session,ids)
+    return articles

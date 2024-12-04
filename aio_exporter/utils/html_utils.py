@@ -130,3 +130,19 @@ def parse_bilibili_time(time_str):
             return dt
 
     return time_str  # 如果没有匹配的模式，返回None
+
+def clean_urls(doc_text):
+    urls = {}
+    for urlid, match in enumerate(re.findall('!?\[.*\]\(.*\)', doc_text), 1):
+        place_holder = f'[link_{urlid}/img_{urlid}]'
+        urls[place_holder] = match
+        doc_text = doc_text.replace(match, place_holder)
+
+    doc_text = re.sub(r'(\n(\s)*){3,}', '\n\n', doc_text)
+    doc_text = re.sub('\*{3,}', '**', doc_text)
+    doc_text = re.sub('(==){4,}', '==', doc_text)
+    doc_text = re.sub('(\.\.\.\.){4,}', '....', doc_text)
+    doc_text = re.sub('(\-\-\-\-){2,}', '---', doc_text)
+    doc_text = doc_text.replace('\n**', '**')
+    # 设计上你需要把所有的 html 都暂存起来
+    return doc_text, urls
