@@ -24,6 +24,8 @@ class BaseParser:
             # zhihu 的情况
             if img_tag.get('src') and 'zhimg' in img_tag.get('src'):
                 img_tag['alt'] = 'img'
+            if img_tag.get('src') and not img_tag.get('alt'):
+                img_tag['alt'] = 'img'
 
     def extract_images(self, md_text):
         # 从 md text 当中解析所有的 img url

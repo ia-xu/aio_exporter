@@ -108,19 +108,25 @@ downloader:
     allow_websites:
       simple:
         - domain: news.qq.com
+          author: '腾讯新闻'
           title:
             replace: [ _腾讯新闻 ]
         - domain: www.thepaper.cn
+          author: '澎湃新闻'
           title:
             replace: [ "_澎湃新闻-The Paper" ]
         - domain: www.sohu.com
+          author: 搜狐
         - domain: sina.com
+          author: 新浪
           title:
             replace: ['_新浪财经','_新浪网','__财经头条']
         - domain: www.cs.com.cn
+          author: 中证网
           title:
             replace: ['_中证网']
         - domain:  www.cn-healthcare.com
+          author: 健康界
           title:
             replace: ['|']
           date:
@@ -129,48 +135,63 @@ downloader:
             regex: '[0-9]{4} [0-9]{2}/[0-9]{2}'
             format: "%Y %m/%d"
         - domain: m.21jingji.com
+          author: 21经济
           title:
             replace: ['- 21财经']
         - domain: www.cbimc.cn
+          author: 中国银行保险报
         - domain: www.ce.cn
+          author: 中国经济网
           title:
             replace : ['_中国经济网']
           date:
             type: auto
             index: 0
         - domain: people.com.cn
+          author: 人民日报
           date:
             type: url
             regex: '[0-9]{4}/[0-9]{4}'
             format: "%Y/%m%d"
         - domain: www.cpic.com
+          author: 太平洋保险
           date:
             type: url
         - domain: www.shenlanbao.com
+          author: 深蓝保
           forbid: [topics]
           encoding: utf-8
         - domain: www.csai.cn
+          author: 希财网
         - domain: xueqiu.com
+          author: 雪球网
           title:
             type: h1
         - domain: post.smzdm.com
+          author: 什么值得买
           date:
             index: 0
         - domain: news.vobao.com
+          author: 沃保网
           title:
             type: h1
         - domain: www.99.com.cn
+          author: 99健康
         - domain: www.chinanews.com.cn
+          author: 中国日报
           title:
             replace: ['-中新网']
           encoding: utf-8
         - domain: www.jsw.com.cn
+          author: 金山网
           title:
             type: h1
       complex:
         - domain: www.gov.cn
+          author: 中国政府网
           date:
             search: true
         - domain: www.jiemian.com
+          author: 界面新闻
           title:
             repalce: [ '|界面新闻' ]

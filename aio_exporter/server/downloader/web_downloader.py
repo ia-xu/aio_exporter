@@ -5,8 +5,19 @@ from contextlib import contextmanager
 import readability
 from bs4 import BeautifulSoup
 import re
+import json
+import os
+from loguru import logger
 from datetime import datetime
+from aio_exporter.utils import sql_utils
+from aio_exporter.utils.utils import get_work_dir
 
+
+work_dir = get_work_dir()
+database = work_dir / 'database' / 'download'
+database.mkdir(exist_ok=True)
+web_dir = database / 'web'
+web_dir.mkdir(exist_ok=True)
 
 class WebDownloader(BaseDownloader):
     def __init__(self):
@@ -122,17 +133,47 @@ class WebDownloader(BaseDownloader):
     def download(self, url):
         config = self.get_url_config(url)
         if not config:
-            return ''
-        print('download {}'.format(url))
+            return '[ERROR]不支持的网站'
         if config.get('forbid',[]):
             if any( kw in url for kw in config.forbid):
-                return ''
+                return '[ERROR]不支持的url'
+        articles = sql_utils.get_article_by_url(self.session, url)
+        if articles:
+            # 说明之前处理过，不重复处理
+            storage_path = self.gather_article_with_storage([_.id for _ in articles]).storage_path[0]
+            if os.path.exists(storage_path):
+                logger.info('加载已经下载过的文档: {}'.format(Path(storage_path).name))
+                with open(storage_path , 'r' , encoding='utf-8') as f:
+                    return f.read()
+
         html = self._download(url, config)
+        articles = self.insert_new_download_article(url , html , config)
+        article = articles[0]
+        article_download_path = self.assign_path(article)
+        try:
+            with open(article_download_path, 'w', encoding='utf-8') as f:
+                f.write(html)
+            # 这里简单一点，不考虑重试或者其他情况
+            self.upsert_status(article.id, '下载成功', 1)
+        except:
+            self.upsert_status(article.id, '下载失败', 1)
+        return html
+
+    def insert_new_download_article(self , url , html , config):
         title = self.title(html, config)
         date = self.date(url , html, config, title)
 
-        print(title, "||", date)
-        return html
+        # 插入新的数据
+        metadata = '{}'
+        sql_utils.insert_if_not_exists(
+            self.session, title, config.author, url, date, self.source_name, metadata
+        )
+        # 分配下载路径,并下载
+        articles = sql_utils.get_article_by_url(self.session, url)
+
+        return articles
+
+
 
     def _download(self, url, config):
         if any(cfg.domain in url for cfg in self.config.allow_websites.complex):
@@ -153,26 +194,58 @@ class WebDownloader(BaseDownloader):
             return html
 
 
+    def assign_path(self , article ):
+        # 分配下载地址
+        account_dir = web_dir / article.author
+        account_dir.mkdir(exist_ok=True)
+        title = self.clean_title(article.title)
+
+        file_path = account_dir / f'{article.id}_{title}.html'
+        # 检查filepath 是否已经存在
+        idx = 0
+        while self.check_file_path_exists(file_path):
+            # 更新位置
+            file_path = account_dir / f'{article.id}_{idx}_{title}.html'
+            idx += 1
+
+        logger.info(f'为账号{article.author} 文章分配路径到 {file_path.name}.html')
+        self.insert_assigned_path(
+            article.id,
+            file_path,
+            '尚未开始',
+            'file',
+            0
+        )
+        return file_path
+
 if __name__ == "__main__":
     from aio_exporter.server.parser import WebParser
     from pathlib import Path
 
-    with open(Path(__file__).parent / 'testurl') as f:
-        lines = f.readlines()
+    # lines = [
+    #     'https://www.shenlanbao.com/wenda/2-112160',
+    #     'https://www.cpic.com.cn/c/2020-12-01/1612748.shtml',
+    #     'https://finance.china.com.cn/roll/20241203/6192714.shtml',
+    #     'https://www.csai.cn/baoxian/1295371.html',
+    #     'https://news.qq.com/rain/a/20220510A06BZ700',
+    #     'https://www.gov.cn/xinwen/2021-02/01/content_5584251.htm',
+    #     'https://xueqiu.com/4866021334/176935687',
+    #     'https://post.smzdm.com/p/aklpmlm8/',
+    #     'https://www.99.com.cn/ylbx/zjx/905096.htm',
+    #     'https://news.vobao.com/article/1125240934764531413.shtml',
+    #     'https://finance.sina.com.cn/roll/2024-11-28/doc-incxrmwq9577455.shtml',
+    #     'http://www.21jingji.com/article/20220617/herald/de64511c5c7bfdfa4b1d08eca208a13d.html',
+    #     'https://www.jiemian.com/article/5231215.html',
+    # ]
 
+    lines = ['https://www.jiemian.com/article/5231215.html']
     downloader = WebDownloader()
     parser = WebParser()
 
-    # html = downloader.download('https://www.jsw.com.cn/2024/1203/1877560.shtml')
-    # print(parser.parse(html))
-
     for line in lines:
         line = line.strip().replace('\'','').replace(',','')
-        if 'zhihu' in line:
-            continue
         html = downloader.download(
             line
         )
-    #     if not html:
-    #         print('debug' , line)
-        # print(parser.parse(html))
+        if '[ERROR]' not in html:
+            print(parser.parse(html))
