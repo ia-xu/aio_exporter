@@ -18,7 +18,45 @@
     - kimichat (调用 api/search/kimisearch?question={question})
         - 利用 seleniumn 模拟 kimi 登录，向 kimi 发送问题并获取搜索到的 urls
 
+## 项目说明
 
+## 1. 项目的基本结构
+    - 对于每一个不同的任务(wechat / bilibili / zhihu / news ...)都可以简单的认为存在三个不同的任务
+        - 1. scrawler: 获取一个主体账号下面的所有的文章,获取文章的 title,url,issue_date,author等信息(仅仅是获取这些文章的信息，不做下载)
+            - 这一步会将获取到的文章信息存储到 sqlite 数据库当中
+        - 2. downloader: 对每一个获取到的url,下载到本地,保存成 html / video 等形式
+            - 这一步需要为每一个url分配下载状态(尚未开始/下载失败/下载成功) 和分配一个本地下载路径    
+            - 对分配了本地下载路径的文章进行下载
+        - 3. parser : 
+            - 对于已经下载好的 html / video , 调用 parser 进行解析,转化为 markdown 形式可以用于后续操作的数据
+            - 这个过程可能会涉及到调用各种深度学习模型 ， 例如 视频的 asr ，文档图片的 ocr/vl大模型 解析，等等
+## 2. 项目提供的两步下载模式
+    - 对于文章的下载我们自然的会希望有两个步骤
+        1. 对于历史文章的批量搜集和下载
+        2. 对当前历史文章下载完成后,会希望通过一个定时任务的形式,定时定期的自动化更新数据库当中的文章信息
+    - 本仓库因此提供了两种下载模式
+        1. command/fast_download.py 
+            - 用for循环粗暴的搜集所有需要的数据,逐步的下载全量数据
+            - 你应该首先执行这个脚本,获取存量数据
+        2. command/cron_setting
+            - 启动一些定时任务,定期的下载数据
+            - 存量下载完成后,使用 crontab 配置定时任务,定期为你自己下载数据
+## 3. 项目提供了一下数据的使用的接口
+    - 为了更方便的使用数据，项目对每一个不同的类别数据都提供了一些接口
+        - 详见 aio_exporter/cli/app/controllers   
+        - 例如获取账号的文章列表,获取指定文章的 markdown 格式的解析结果
+## 4. 项目提供了一个描述下载情况的看版
+    - 为了查看文章爬取和下载的情况,提供了一个看版展示各种信息
+        - 详见 aio_exporter/webui/main.py
+## 5. 项目提供了一个“搜索引擎”，用于获取一些新闻和相关的文章
+    - 在构建文档库的过程中,针对每篇文章,你可能会希望搜集文章相关的问题
+    - 参考 aio_exporter/server/scrawler/web_scrawler.py   
+    - 借助 kimi , 你可以获取到你生成的问题的相关的各种 url 
+    - 详见 api_exporter/cli/app/controllers/search.py 
+## 6. 项目需要一些登录信息
+    - 对于 wechat / zhihu / bilibili / kimi 信息的获取，你都需要进行selenimu 模拟登录和获取相关的cookie
+    - 参考 aio_exporter/local/login 
+        在你的本地电脑上打开网页并登录,这些代码会为你自动保存 cookie 
 
 
 ## 使用方式
