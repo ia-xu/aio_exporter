@@ -51,7 +51,7 @@ async def download_bilibili():
         await asyncio.sleep(2)
 
 
-def gather_article():
+def gather_article(account = None):
     logger.info('start to gather wechat article')
     scrawler = WechatScrawler()
     status = scrawler.login_status()
@@ -59,7 +59,8 @@ def gather_article():
 
     # 然后开始下载数据
     # 我们每一次尽量集中的下载一个公众号下面的文章
-    account = random.choice(scrawler.config['SubscriptionAccounts'])
+    if account is None:
+        account = random.choice(scrawler.config['SubscriptionAccounts'])
     # account = random.choice(['保险一哥','蓝鲸insurance','蓝鲸课堂','关哥说险','明亚保险经纪'])
     fake_id = scrawler.search_bizno(account)
     articles = scrawler.walk_through_article(account, fake_id, max_count=500)
@@ -151,13 +152,31 @@ async def download_wechat():
             logger.info(row.title + ':' + prefix + '下载成功')
             wechat_downloader.upsert_status(row.id, '下载成功', row.download_count + 1)
 
+def iterate():
+    scrawler = WechatScrawler()
+    accounts = scrawler.config['SubscriptionAccounts']
+    scrawler.close()
+    idx = 0
+    while True:
+        # 轮询所有的微信公众号文章
+        account = accounts[idx % len(accounts)]
+        gather_article()
+        time.sleep(60)
+        idx += 1
+
+
 if __name__ == '__main__':
-    # while True:
-    #     gather_article()
-    #     time.sleep(60)
+
+    # 轮询获取所有的公众号文章
+    # iterate()
+    # 轮询下载所有的公众号文章
+    asyncio.run(download_wechat())
+
 
     # asyncio.run(download_bilibili())
-    asyncio.run(download_wechat())
+    pass
+
+
 
 
 
