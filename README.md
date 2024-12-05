@@ -4,15 +4,22 @@
 - 支持对指定的 up/博主 进行定时定期的搜集更新的文章
 - 适合**个人**对少数up主进行**小批量的数据**的自动化获取
 
-## 已经支持如下数据源
+## 已经支持对如下数据源按照 公众号名称/up 主 进行数据下载
 
     - wechat
     - bilibili
+
+## 已经支持对于如下数据源按照指定的 url 进行网页下载 
+
     - zhihu(支持了下载和解析,暂时不支持爬取)
+    - 各种主流的新闻网站 (qq , sina , souhu , ...) ,详见 aio_exporter/config.yaml
 
 ## 支持搜索工具
     - kimichat (调用 api/search/kimisearch?question={question})
         - 利用 seleniumn 模拟 kimi 登录，向 kimi 发送问题并获取搜索到的 urls
+
+
+
 
 ## 使用方式
 
